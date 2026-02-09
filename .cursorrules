@@ -1,0 +1,71 @@
+# AI Ethnography Website - Cursor Rules
+
+## Project Overview
+This is a Next.js 16 PWA for collecting healthcare professionals' experiences with AI in medicine. It uses TypeScript, Tailwind CSS v4, and react-globe.gl for 3D visualization.
+
+## Code Style
+
+### TypeScript
+- Use strict TypeScript with explicit types for function parameters and return values
+- Prefer interfaces over type aliases for object shapes
+- Use `type` for unions, intersections, and utility types
+- Define types in `src/lib/types.ts` for shared types
+
+### React Components
+- Use functional components with TypeScript interfaces for props
+- Place components in `src/components/[ComponentName]/index.tsx`
+- Keep components focused and single-responsibility
+- Use named exports for components
+
+### File Organization
+```
+src/components/ComponentName/
+├── index.tsx        # Main component
+├── styles.css       # Component-specific styles (if needed)
+└── utils.ts         # Component-specific utilities (if needed)
+```
+
+### Styling
+- Use Tailwind CSS classes exclusively
+- Follow mobile-first responsive design (`sm:`, `md:`, `lg:`, `xl:`)
+- Use CSS variables for theming when needed
+- Prefer Tailwind's built-in utilities over custom CSS
+
+### Naming Conventions
+- **Components**: PascalCase (`AudioRecorder`, `ConsentModal`)
+- **Files**: kebab-case for utilities, PascalCase folders for components
+- **Functions**: camelCase (`handleSubmit`, `formatDate`)
+- **Constants**: SCREAMING_SNAKE_CASE (`MAX_RECORDING_TIME`)
+- **Types/Interfaces**: PascalCase with descriptive names (`UserMetadata`, `ExperienceSubmission`)
+
+### Best Practices
+- Keep functions small and focused
+- Use early returns to reduce nesting
+- Destructure props at the function signature level
+- Use optional chaining (`?.`) and nullish coalescing (`??`)
+- Prefer `const` over `let`, never use `var`
+- Use async/await over .then() chains
+
+### API Layer
+- All API calls go through `src/lib/api.ts`
+- Use TypeScript generics for API response types
+- Handle errors gracefully with try/catch
+- Mock data lives in `src/lib/mockData.ts` during development
+
+### Accessibility
+- Use semantic HTML elements
+- Include alt text for images
+- Ensure proper heading hierarchy
+- Support keyboard navigation
+- Use ARIA labels where needed
+
+### Performance
+- Use Next.js Image component for images
+- Lazy load heavy components (like Globe)
+- Avoid unnecessary re-renders with proper dependency arrays
+- Use dynamic imports for code splitting
+
+## Git Practices
+- Write clear, concise commit messages
+- Keep commits atomic and focused
+- Branch naming: `feature/`, `fix/`, `chore/`
