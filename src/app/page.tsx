@@ -81,7 +81,7 @@ export default function Home() {
     <div className={`min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 ${ubuntu.className}`}>
       {/* Hero Section */}
       <main>
-        <section className="min-h-[100dvh] flex items-center justify-center px-4 pt-20 pb-12">
+        <section className="min-h-dvh flex items-center justify-center px-4 pt-20 pb-12">
           <div className="text-center max-w-5xl mx-auto">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-300 text-sm lg:text-base mb-8">
