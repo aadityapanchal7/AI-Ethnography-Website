@@ -70,37 +70,37 @@ export default function AudioRecorder({ onRecordingComplete, onBack, existingBlo
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-3">
           <svg className="w-5 h-5 text-red-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p className="text-red-300 text-sm">{error}</p>
+          <p className="text-red-400 text-sm">{error}</p>
         </div>
       )}
 
       {/* Prompts/Tips */}
-      <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/30">
+      <div className="bg-white/5 rounded-xl p-4 border border-white/10">
         <h3 className="font-medium text-white mb-3 flex items-center gap-2">
-          <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-5 h-5 text-[#3B82F6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
           </svg>
           Things to consider sharing:
         </h3>
-        <ul className="text-slate-300 text-sm space-y-2">
+        <ul className="text-slate-400 text-sm space-y-2">
           <li className="flex items-start gap-2">
-            <span className="text-blue-400">•</span>
+            <span className="text-[#3B82F6]">•</span>
             A specific moment when AI made a difference in your practice
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-blue-400">•</span>
+            <span className="text-[#3B82F6]">•</span>
             Challenges or concerns you&apos;ve encountered with AI tools
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-blue-400">•</span>
+            <span className="text-[#3B82F6]">•</span>
             How AI has changed your workflow or patient interactions
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-blue-400">•</span>
+            <span className="text-[#3B82F6]">•</span>
             Your hopes or worries about the future of AI in medicine
           </li>
         </ul>
@@ -118,7 +118,7 @@ export default function AudioRecorder({ onRecordingComplete, onBack, existingBlo
               fill="none"
               stroke="currentColor"
               strokeWidth="6"
-              className="text-slate-700"
+              className="text-slate-800"
             />
             {/* Progress ring */}
             <circle
@@ -140,7 +140,7 @@ export default function AudioRecorder({ onRecordingComplete, onBack, existingBlo
               </linearGradient>
             </defs>
           </svg>
-          
+
           {/* Center content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             {isRecording ? (
@@ -154,15 +154,15 @@ export default function AudioRecorder({ onRecordingComplete, onBack, existingBlo
               </>
             ) : hasRecording ? (
               <>
-                <svg className="w-8 h-8 text-green-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-8 h-8 text-green-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 <span className="text-3xl font-mono font-bold text-white">{formatTime(duration || 0)}</span>
-                <span className="text-xs text-slate-400 mt-1">Recording complete</span>
+                <span className="text-xs text-slate-500 mt-1">Recording complete</span>
               </>
             ) : (
               <>
-                <svg className="w-10 h-10 text-slate-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-10 h-10 text-slate-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
                 <span className="text-sm text-slate-400">Ready to record</span>
@@ -178,7 +178,7 @@ export default function AudioRecorder({ onRecordingComplete, onBack, existingBlo
         {!isRecording && !hasRecording && (
           <button
             onClick={startRecording}
-            className="w-16 h-16 rounded-full bg-linear-to-r from-red-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-red-500/30 hover:from-red-600 hover:to-pink-700 transition-all hover:scale-105"
+            className="w-16 h-16 rounded-full bg-gradient-to-r from-red-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-red-500/30 hover:from-red-600 hover:to-pink-700 transition-all hover:scale-105"
           >
             <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="6" />
@@ -191,7 +191,7 @@ export default function AudioRecorder({ onRecordingComplete, onBack, existingBlo
             {/* Pause/Resume */}
             <button
               onClick={isPaused ? resumeRecording : pauseRecording}
-              className="w-14 h-14 rounded-full bg-slate-700 text-white flex items-center justify-center hover:bg-slate-600 transition-all"
+              className="w-14 h-14 rounded-full bg-white text-slate-950 flex items-center justify-center hover:bg-slate-100 transition-all shadow-sm"
             >
               {isPaused ? (
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -207,7 +207,7 @@ export default function AudioRecorder({ onRecordingComplete, onBack, existingBlo
             {/* Stop */}
             <button
               onClick={stopRecording}
-              className="w-16 h-16 rounded-full bg-linear-to-r from-red-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-red-500/30 hover:from-red-600 hover:to-pink-700 transition-all hover:scale-105"
+              className="w-16 h-16 rounded-full bg-gradient-to-r from-red-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-red-500/30 hover:from-red-600 hover:to-pink-700 transition-all hover:scale-105"
             >
               <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
                 <rect x="6" y="6" width="12" height="12" rx="2" />
@@ -221,7 +221,7 @@ export default function AudioRecorder({ onRecordingComplete, onBack, existingBlo
             {/* Re-record */}
             <button
               onClick={resetRecording}
-              className="w-14 h-14 rounded-full bg-slate-700 text-white flex items-center justify-center hover:bg-slate-600 transition-all"
+              className="w-14 h-14 rounded-full bg-slate-800 text-white border border-white/10 flex items-center justify-center hover:bg-slate-700 transition-all shadow-sm"
               title="Re-record"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -234,9 +234,9 @@ export default function AudioRecorder({ onRecordingComplete, onBack, existingBlo
 
       {/* Audio Playback */}
       {displayUrl && !isRecording && (
-        <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/30">
+        <div className="bg-white/5 rounded-xl p-4 border border-white/10">
           <h3 className="font-medium text-white mb-3 flex items-center gap-2">
-            <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5 text-[#3B82F6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
             </svg>
             Preview your recording
@@ -255,18 +255,17 @@ export default function AudioRecorder({ onRecordingComplete, onBack, existingBlo
       <div className="flex gap-3 pt-4">
         <button
           onClick={onBack}
-          className="flex-1 px-6 py-3 rounded-xl font-medium text-slate-300 bg-slate-700/50 hover:bg-slate-700 transition-colors"
+          className="flex-1 px-6 py-3 rounded-xl font-medium text-slate-300 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
         >
           Back
         </button>
         <button
           onClick={handleContinue}
           disabled={!hasRecording || isRecording}
-          className={`flex-1 px-6 py-3 rounded-xl font-medium transition-all ${
-            hasRecording && !isRecording
-              ? 'bg-linear-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg shadow-blue-500/25'
-              : 'bg-slate-700 text-slate-500 cursor-not-allowed'
-          }`}
+          className={`flex-1 px-6 py-3 rounded-xl font-medium transition-all shadow-lg ${hasRecording && !isRecording
+            ? 'bg-white text-slate-950 hover:bg-slate-100'
+            : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+            }`}
         >
           Continue to Review
         </button>

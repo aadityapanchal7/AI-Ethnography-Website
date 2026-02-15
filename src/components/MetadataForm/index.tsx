@@ -45,8 +45,8 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
   const filteredCountries = useMemo(() => {
     if (!searchCountry) return countries;
     const search = searchCountry.toLowerCase();
-    return countries.filter(c => 
-      c.name.toLowerCase().includes(search) || 
+    return countries.filter(c =>
+      c.name.toLowerCase().includes(search) ||
       c.code.toLowerCase().includes(search)
     );
   }, [searchCountry]);
@@ -55,8 +55,8 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
   const filteredLanguages = useMemo(() => {
     if (!searchLanguage) return languages;
     const search = searchLanguage.toLowerCase();
-    return languages.filter(l => 
-      l.name.toLowerCase().includes(search) || 
+    return languages.filter(l =>
+      l.name.toLowerCase().includes(search) ||
       l.code.toLowerCase().includes(search)
     );
   }, [searchLanguage]);
@@ -65,7 +65,7 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
   const filteredSpecialties = useMemo(() => {
     if (!searchSpecialty) return specialties;
     const search = searchSpecialty.toLowerCase();
-    return specialties.filter(s => 
+    return specialties.filter(s =>
       s.label.toLowerCase().includes(search)
     );
   }, [searchSpecialty]);
@@ -113,8 +113,8 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
 
       {/* Country Selection */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-300">
-          Country <span className="text-red-400">*</span>
+        <label className="block text-sm font-medium text-white">
+          Country <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <input
@@ -122,10 +122,10 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
             placeholder="Search countries..."
             value={searchCountry}
             onChange={(e) => setSearchCountry(e.target.value)}
-            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/50 focus:border-[#3B82F6]"
           />
           {searchCountry && filteredCountries.length > 0 && (
-            <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-slate-800 border border-slate-700 rounded-xl shadow-xl">
+            <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-slate-900 border border-white/10 rounded-xl shadow-xl">
               {filteredCountries.slice(0, 10).map((country) => (
                 <button
                   key={country.code}
@@ -135,7 +135,7 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
                     setSearchCountry('');
                     setErrors(prev => ({ ...prev, country: undefined }));
                   }}
-                  className="w-full px-4 py-2 text-left text-slate-200 hover:bg-slate-700 first:rounded-t-xl last:rounded-b-xl"
+                  className="w-full px-4 py-2 text-left text-white hover:bg-slate-800 first:rounded-t-xl last:rounded-b-xl"
                 >
                   {country.name}
                 </button>
@@ -143,25 +143,25 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
             </div>
           )}
         </div>
-        {selectedCountry && (
-          <div className="flex items-center justify-between px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <span className="text-blue-300">{selectedCountry.name}</span>
+        {selectedCountry?.name && (
+          <div className="flex items-center justify-between px-4 py-2 bg-[#3B82F6]/10 border border-[#3B82F6]/30 rounded-lg">
+            <span className="text-white">{selectedCountry.name}</span>
             <button
               type="button"
               onClick={() => setFormData(prev => ({ ...prev, country: '' }))}
-              className="text-blue-400 hover:text-blue-300"
+              className="text-[#3B82F6] hover:text-white"
             >
               Change
             </button>
           </div>
         )}
-        {errors.country && <p className="text-red-400 text-sm">{errors.country}</p>}
+        {errors.country && <p className="text-red-500 text-sm">{errors.country}</p>}
       </div>
 
       {/* Career Stage */}
       <div className="space-y-3">
-        <label className="block text-sm font-medium text-slate-300">
-          Career Stage <span className="text-red-400">*</span>
+        <label className="block text-sm font-medium text-white">
+          Career Stage <span className="text-red-500">*</span>
         </label>
         <div className="grid grid-cols-2 gap-3">
           {careerStages.map((stage) => (
@@ -172,24 +172,23 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
                 setFormData(prev => ({ ...prev, careerStage: stage.value }));
                 setErrors(prev => ({ ...prev, careerStage: undefined }));
               }}
-              className={`p-4 rounded-xl border text-left transition-all ${
-                formData.careerStage === stage.value
-                  ? 'bg-blue-500/20 border-blue-500 ring-2 ring-blue-500/50'
-                  : 'bg-slate-800/50 border-slate-700 hover:border-slate-600'
-              }`}
+              className={`p-4 rounded-xl border text-left transition-all ${formData.careerStage === stage.value
+                ? 'bg-[#3B82F6]/20 border-[#3B82F6] ring-2 ring-[#3B82F6]/30'
+                : 'bg-white/5 border-white/10 hover:border-white/20'
+                }`}
             >
               <div className="font-medium text-white">{stage.label}</div>
               <div className="text-xs text-slate-400 mt-1">{stage.description}</div>
             </button>
           ))}
         </div>
-        {errors.careerStage && <p className="text-red-400 text-sm">{errors.careerStage}</p>}
+        {errors.careerStage && <p className="text-red-500 text-sm">{errors.careerStage}</p>}
       </div>
 
       {/* Specialty */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-300">
-          Specialty <span className="text-red-400">*</span>
+        <label className="block text-sm font-medium text-white">
+          Specialty <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <input
@@ -197,10 +196,10 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
             placeholder="Search specialties..."
             value={searchSpecialty}
             onChange={(e) => setSearchSpecialty(e.target.value)}
-            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/50 focus:border-[#3B82F6]"
           />
           {searchSpecialty && filteredSpecialties.length > 0 && (
-            <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-slate-800 border border-slate-700 rounded-xl shadow-xl">
+            <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-slate-900 border border-white/10 rounded-xl shadow-xl">
               {filteredSpecialties.slice(0, 10).map((specialty) => (
                 <button
                   key={specialty.value}
@@ -210,7 +209,7 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
                     setSearchSpecialty('');
                     setErrors(prev => ({ ...prev, specialty: undefined }));
                   }}
-                  className="w-full px-4 py-2 text-left text-slate-200 hover:bg-slate-700 first:rounded-t-xl last:rounded-b-xl"
+                  className="w-full px-4 py-2 text-left text-white hover:bg-slate-800 first:rounded-t-xl last:rounded-b-xl"
                 >
                   {specialty.label}
                 </button>
@@ -218,25 +217,25 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
             </div>
           )}
         </div>
-        {selectedSpecialty && (
-          <div className="flex items-center justify-between px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <span className="text-blue-300">{selectedSpecialty.label}</span>
+        {selectedSpecialty?.label && (
+          <div className="flex items-center justify-between px-4 py-2 bg-[#3B82F6]/10 border border-[#3B82F6]/30 rounded-lg">
+            <span className="text-white">{selectedSpecialty.label}</span>
             <button
               type="button"
               onClick={() => setFormData(prev => ({ ...prev, specialty: '' }))}
-              className="text-blue-400 hover:text-blue-300"
+              className="text-[#3B82F6] hover:text-white"
             >
               Change
             </button>
           </div>
         )}
-        {errors.specialty && <p className="text-red-400 text-sm">{errors.specialty}</p>}
+        {errors.specialty && <p className="text-red-500 text-sm">{errors.specialty}</p>}
       </div>
 
       {/* Language */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-slate-300">
-          Preferred Language for Recording <span className="text-red-400">*</span>
+        <label className="block text-sm font-medium text-white">
+          Preferred Language for Recording <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <input
@@ -244,10 +243,10 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
             placeholder="Search languages..."
             value={searchLanguage}
             onChange={(e) => setSearchLanguage(e.target.value)}
-            className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/50 focus:border-[#3B82F6]"
           />
           {searchLanguage && filteredLanguages.length > 0 && (
-            <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-slate-800 border border-slate-700 rounded-xl shadow-xl">
+            <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-slate-900 border border-white/10 rounded-xl shadow-xl">
               {filteredLanguages.slice(0, 10).map((language) => (
                 <button
                   key={language.code}
@@ -257,7 +256,7 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
                     setSearchLanguage('');
                     setErrors(prev => ({ ...prev, language: undefined }));
                   }}
-                  className="w-full px-4 py-2 text-left text-slate-200 hover:bg-slate-700 first:rounded-t-xl last:rounded-b-xl"
+                  className="w-full px-4 py-2 text-left text-white hover:bg-slate-800 first:rounded-t-xl last:rounded-b-xl"
                 >
                   {language.name}
                 </button>
@@ -265,25 +264,25 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
             </div>
           )}
         </div>
-        {selectedLanguage && (
-          <div className="flex items-center justify-between px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-            <span className="text-blue-300">{selectedLanguage.name}</span>
+        {selectedLanguage?.name && (
+          <div className="flex items-center justify-between px-4 py-2 bg-[#3B82F6]/10 border border-[#3B82F6]/30 rounded-lg">
+            <span className="text-white">{selectedLanguage.name}</span>
             <button
               type="button"
               onClick={() => setFormData(prev => ({ ...prev, language: '' }))}
-              className="text-blue-400 hover:text-blue-300"
+              className="text-[#3B82F6] hover:text-white"
             >
               Change
             </button>
           </div>
         )}
-        {errors.language && <p className="text-red-400 text-sm">{errors.language}</p>}
+        {errors.language && <p className="text-red-500 text-sm">{errors.language}</p>}
       </div>
 
       {/* Practice Setting */}
       <div className="space-y-3">
-        <label className="block text-sm font-medium text-slate-300">
-          Practice Setting <span className="text-red-400">*</span>
+        <label className="block text-sm font-medium text-white">
+          Practice Setting <span className="text-red-500">*</span>
         </label>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {practiceSettings.map((setting) => (
@@ -294,17 +293,16 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
                 setFormData(prev => ({ ...prev, practiceSetting: setting.value }));
                 setErrors(prev => ({ ...prev, practiceSetting: undefined }));
               }}
-              className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
-                formData.practiceSetting === setting.value
-                  ? 'bg-blue-500/20 border-blue-500 text-blue-300 ring-2 ring-blue-500/50'
-                  : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600'
-              }`}
+              className={`px-4 py-3 rounded-xl border text-sm font-medium transition-all ${formData.practiceSetting === setting.value
+                ? 'bg-[#3B82F6]/20 border-[#3B82F6] text-white ring-2 ring-[#3B82F6]/30'
+                : 'bg-white/5 border-white/10 text-slate-300 hover:border-white/20'
+                }`}
             >
               {setting.label}
             </button>
           ))}
         </div>
-        {errors.practiceSetting && <p className="text-red-400 text-sm">{errors.practiceSetting}</p>}
+        {errors.practiceSetting && <p className="text-red-500 text-sm">{errors.practiceSetting}</p>}
       </div>
 
       {/* Navigation Buttons */}
@@ -312,13 +310,13 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
         <button
           type="button"
           onClick={onBack}
-          className="flex-1 px-6 py-3 rounded-xl font-medium text-slate-300 bg-slate-700/50 hover:bg-slate-700 transition-colors"
+          className="flex-1 px-6 py-3 rounded-xl font-medium text-slate-300 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
         >
           Back
         </button>
         <button
           type="submit"
-          className="flex-1 px-6 py-3 rounded-xl font-medium bg-linear-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg shadow-blue-500/25 transition-all"
+          className="flex-1 px-6 py-3 rounded-xl font-medium bg-white text-slate-950 hover:bg-slate-100 shadow-lg transition-all"
         >
           Continue to Recording
         </button>
