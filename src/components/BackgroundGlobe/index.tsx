@@ -165,7 +165,8 @@ const BackgroundGlobe: React.FC = () => {
   }, [mounted]);
 
   // Calculate pulsing point radius
-  const getPointRadius = (point: BackgroundGlobePoint) => {
+  const getPointRadius = (obj: object) => {
+    const point = obj as BackgroundGlobePoint;
     return point.baseSize * (Math.sin(animationFrame + point.animationOffset) * 0.15 + 1);
   };
 
@@ -242,7 +243,7 @@ const BackgroundGlobe: React.FC = () => {
         arcColor="color"
         arcDashLength={0.4}
         arcDashGap={0.2}
-        arcDashAnimateTime={(d: AnimatedArc) => 1000 / d.animationSpeed}
+        arcDashAnimateTime={(obj: object) => 1000 / (obj as AnimatedArc).animationSpeed}
         arcStroke={0.5}
         arcAltitude={0.2}
         arcAltitudeAutoScale={0.3}
