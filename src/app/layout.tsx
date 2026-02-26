@@ -9,15 +9,15 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AI in Medicine Experiences",
-  description: "A global ethnographic study capturing how healthcare professionals experience artificial intelligence in their daily practice.",
-  keywords: ["AI", "medicine", "healthcare", "ethnography", "research", "artificial intelligence"],
-  authors: [{ name: "AI in Medicine Research Team" }],
+  title: "Voices of AI · MIT Critical Data",
+  description: "A global ethnographic study documenting how healthcare professionals experience artificial intelligence in medicine.",
+  keywords: ["AI", "medicine", "healthcare", "ethnography", "research", "MIT", "Critical Data"],
+  authors: [{ name: "MIT Critical Data" }],
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "AI in Medicine",
+    title: "Voices of AI",
   },
 };
 
@@ -25,7 +25,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#E8EEF2",
+  themeColor: "#000000",
 };
 
 export default function RootLayout({

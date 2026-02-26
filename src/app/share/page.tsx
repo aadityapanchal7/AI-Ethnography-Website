@@ -74,97 +74,111 @@ export default function SharePage() {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-[#020617] via-[#050B14] to-[#0A1628] ${ubuntu.className} relative overflow-hidden`}>
+    <div className={`min-h-screen bg-black ${ubuntu.className} relative overflow-hidden`}>
       {/* Background Globe */}
       <BackgroundGlobe />
 
-      <div className="relative z-10 min-h-screen flex flex-col pt-28">
-        {/* Main Content */}
-        <main className="max-w-2xl mx-auto w-full px-4 pb-20 flex-1 flex flex-col">
-          <div className="bg-slate-900/40 backdrop-blur-2xl rounded-2xl border border-white/10 p-6 sm:p-8 shadow-sm flex-1 flex flex-col">
-            {/* Progress Indicator */}
-            <div className="w-full mb-10">
-              <div className="flex items-start justify-between">
-                {steps.map((step, index) => {
-                  const stepIndex = index;
-                  const isActive = currentStepIndex === stepIndex;
-                  const isComplete = currentStepIndex > stepIndex;
+      <div className="relative z-10 min-h-screen flex flex-col bg-black/80">
 
-                  return (
-                    <div key={step.id} className="flex-1 relative">
-                      {/* Connector Line */}
-                      {index < steps.length - 1 && (
-                        <div
-                          className={`absolute left-1/2 w-full top-5 h-0.5 transition-colors duration-300 ${currentStepIndex > stepIndex ? 'bg-white' : 'bg-slate-800'
-                            }`}
-                        />
-                      )}
+        {/* ── PAGE HEADER ───────────────────────────── */}
+        <div className="bg-black/60 backdrop-blur-md border-b border-white/10 pt-28 pb-10 px-6">
+          <div className="max-w-3xl mx-auto">
+            <p className="text-xs font-semibold tracking-[0.2em] uppercase text-[#38BDF8] mb-3">
+              MIT Critical Data · Digital Ethnography
+            </p>
+            <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight">
+              Share Your Story<span className="text-[#38BDF8]">.</span>
+            </h1>
+            <p className="mt-3 text-white/50 text-sm leading-relaxed max-w-lg">
+              A 5-minute audio or video recording in your own words — your experience with AI in medicine, education, or daily life.
+            </p>
+          </div>
+        </div>
 
-                      <div className="flex flex-col items-center relative z-10">
-                        <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all shadow-sm ${isComplete
-                            ? 'bg-white text-slate-950'
-                            : isActive
-                              ? 'bg-[#3B82F6] text-white ring-4 ring-[#3B82F6]/20'
-                              : 'bg-slate-800 text-slate-500 border border-white/5'
-                            }`}
-                        >
-                          {isComplete ? (
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          ) : (
-                            index + 1
-                          )}
-                        </div>
-                        <span className={`text-xs mt-2 font-medium ${isActive ? 'text-white' : 'text-slate-500'}`}>
-                          {step.label}
-                        </span>
+        {/* ── STEPPER ───────────────────────────────── */}
+        <div className="bg-black/80 backdrop-blur-sm border-b border-white/10 px-6 py-5">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex items-center gap-0">
+              {steps.map((step, index) => {
+                const isActive = currentStepIndex === index;
+                const isComplete = currentStepIndex > index;
+                return (
+                  <div key={step.id} className="flex items-center flex-1 last:flex-none">
+                    {/* step */}
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-all ${isComplete
+                          ? 'bg-white text-black'
+                          : isActive
+                            ? 'bg-[#38BDF8] text-black ring-4 ring-[#38BDF8]/20'
+                            : 'bg-white/10 text-white/30'
+                          }`}
+                      >
+                        {isComplete ? (
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          index + 1
+                        )}
                       </div>
+                      <span className={`text-xs font-medium whitespace-nowrap ${isActive ? 'text-white' : 'text-white/30'}`}>
+                        {step.label}
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
+                    {/* connector */}
+                    {index < steps.length - 1 && (
+                      <div className={`mx-3 flex-1 h-px transition-colors ${isComplete ? 'bg-white/40' : 'bg-white/10'}`} />
+                    )}
+                  </div>
+                );
+              })}
             </div>
+          </div>
+        </div>
 
-            {/* Consent Step */}
-            {currentStep === 'consent' && (
-              <ConsentModal
-                onConsent={handleConsent}
-                onClose={() => window.location.href = '/'}
-              />
-            )}
+        {/* ── STEP CONTENT ──────────────────────────── */}
+        <main className="flex-1 flex flex-col bg-black/80">
+          <div className="max-w-3xl mx-auto w-full px-6 py-10 flex-1 flex flex-col">
+            <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl border border-white/10 p-6 sm:p-8 flex-1 flex flex-col">
 
-            {/* Metadata Step */}
-            {currentStep === 'metadata' && (
-              <MetadataForm
-                initialData={metadata || undefined}
-                onSubmit={handleMetadataSubmit}
-                onBack={() => setCurrentStep('consent')}
-              />
-            )}
+              {currentStep === 'consent' && (
+                <ConsentModal
+                  onConsent={handleConsent}
+                  onClose={() => window.location.href = '/'}
+                />
+              )}
 
-            {/* Recording Step */}
-            {currentStep === 'record' && (
-              <AudioRecorder
-                onRecordingComplete={handleRecordingComplete}
-                onBack={() => setCurrentStep('metadata')}
-                existingBlob={audioBlob}
-              />
-            )}
+              {currentStep === 'metadata' && (
+                <MetadataForm
+                  initialData={metadata || undefined}
+                  onSubmit={handleMetadataSubmit}
+                  onBack={() => setCurrentStep('consent')}
+                />
+              )}
 
-            {/* Review Step */}
-            {currentStep === 'review' && metadata && audioBlob && (
-              <ReviewSubmit
-                metadata={metadata}
-                audioBlob={audioBlob}
-                onSubmit={handleSubmit}
-                onEditMetadata={handleEditMetadata}
-                onEditRecording={handleEditRecording}
-              />
-            )}
+              {currentStep === 'record' && (
+                <AudioRecorder
+                  onRecordingComplete={handleRecordingComplete}
+                  onBack={() => setCurrentStep('metadata')}
+                  existingBlob={audioBlob}
+                />
+              )}
+
+              {currentStep === 'review' && metadata && audioBlob && (
+                <ReviewSubmit
+                  metadata={metadata}
+                  audioBlob={audioBlob}
+                  onSubmit={handleSubmit}
+                  onEditMetadata={handleEditMetadata}
+                  onEditRecording={handleEditRecording}
+                />
+              )}
+
+            </div>
           </div>
         </main>
+
       </div>
     </div>
   );

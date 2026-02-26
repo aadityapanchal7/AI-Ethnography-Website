@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #020617;
-  --foreground: #f8fafc;
+  --background: #000000;
+  --foreground: #ffffff;
+  --accent: #38BDF8;
 }
 
 @theme inline {
@@ -25,6 +26,7 @@ body {
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  zoom: 0.8;
 }
 
 /* Custom scrollbar for dark theme */
