@@ -87,10 +87,10 @@ export default function ExplorePage() {
   }, []);
 
   const handleHighlightClick = useCallback((testimonial: Testimonial) => {
-    // Find corresponding map point
     const point = mapData.find((p) => p.id === testimonial.id);
     if (point) {
       setSelectedPoint(point);
+      setIsSidebarOpen(true);
     }
   }, [mapData]);
 
@@ -101,6 +101,10 @@ export default function ExplorePage() {
       setSelectedThemeId(theme.id);
     }
   }, [selectedThemeId]);
+
+  const handleCloseDetail = useCallback(() => {
+    setSelectedPoint(null);
+  }, []);
 
   // Get display names
   const getCountryName = (code: string) =>
@@ -115,6 +119,7 @@ export default function ExplorePage() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col lg:flex-row">
+
         {/* Globe Section */}
         <div className="flex-1 relative min-h-[400px] lg:min-h-0">
           <Globe
@@ -122,44 +127,6 @@ export default function ExplorePage() {
             onPointClick={handlePointClick}
             selectedPointId={selectedPoint?.id}
           />
-
-          {/* Selected Point Detail Overlay */}
-          {selectedPoint && (
-            <div className="absolute bottom-4 left-4 right-4 lg:right-auto lg:max-w-md bg-slate-900/95 backdrop-blur rounded-2xl border border-slate-700/50 p-4 shadow-2xl">
-              <button
-                onClick={() => setSelectedPoint(null)}
-                className="absolute top-2 right-2 p-1 text-slate-400 hover:text-white"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-lg">{getCountryFlag(selectedPoint.country)}</span>
-                <span className="font-semibold text-white">{getCountryName(selectedPoint.country)}</span>
-                <span className="px-2 py-0.5 rounded-full bg-slate-700 text-xs text-slate-300">
-                  {selectedPoint.careerStage}
-                </span>
-              </div>
-
-              <p className="text-slate-200 text-sm leading-relaxed mb-4">
-                &ldquo;{selectedPoint.highlight}&rdquo;
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                <span className="px-2 py-1 rounded-md bg-slate-800 text-slate-300 text-xs">
-                  {getSpecialtyName(selectedPoint.metadata.specialty)}
-                </span>
-                <span className="px-2 py-1 rounded-md bg-slate-800 text-slate-300 text-xs">
-                  {getLanguageName(selectedPoint.metadata.language)}
-                </span>
-                <span className="px-2 py-1 rounded-md bg-slate-800 text-slate-300 text-xs">
-                  {selectedPoint.metadata.practiceSetting}
-                </span>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Sidebar */}
@@ -173,33 +140,43 @@ export default function ExplorePage() {
             <div className="w-12 h-1 rounded-full bg-slate-700" />
           </div>
 
-          {/* Tab Switcher */}
-          <div className="flex border-b border-slate-800/50">
-            <button
-              onClick={() => setActiveTab('highlights')}
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'highlights'
-                  ? 'text-white border-b-2 border-blue-500'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Highlights
-            </button>
-            <button
-              onClick={() => setActiveTab('themes')}
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === 'themes'
-                  ? 'text-white border-b-2 border-blue-500'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Themes
-            </button>
-          </div>
+          {/* Tab Switcher — hidden when a point is selected */}
+          {!selectedPoint && (
+            <div className="flex border-b border-slate-800/50">
+              <button
+                onClick={() => setActiveTab('highlights')}
+                className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                  activeTab === 'highlights'
+                    ? 'text-white border-b-2 border-blue-500'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Highlights
+              </button>
+              <button
+                onClick={() => setActiveTab('themes')}
+                className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                  activeTab === 'themes'
+                    ? 'text-white border-b-2 border-blue-500'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Themes
+              </button>
+            </div>
+          )}
 
           {/* Tab Content */}
           <div className="flex-1 overflow-hidden">
-            {activeTab === 'highlights' ? (
+            {selectedPoint ? (
+              <PointDetailPanel
+                point={selectedPoint}
+                onClose={handleCloseDetail}
+                getCountryName={getCountryName}
+                getLanguageName={getLanguageName}
+                getSpecialtyName={getSpecialtyName}
+              />
+            ) : activeTab === 'highlights' ? (
               <HighlightsFeed
                 highlights={highlights}
                 selectedId={selectedPoint?.id}
@@ -231,11 +208,116 @@ export default function ExplorePage() {
   );
 }
 
-// Simple flag emoji helper
+// ─── Point Detail Panel ───────────────────────────────────────────────────────
+
+function PointDetailPanel({
+  point,
+  onClose,
+  getCountryName,
+  getLanguageName,
+  getSpecialtyName,
+}: {
+  point: MapDataPoint;
+  onClose: () => void;
+  getCountryName: (code: string) => string;
+  getLanguageName: (code: string) => string;
+  getSpecialtyName: (value: string) => string;
+}) {
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/50">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">{getCountryFlag(point.country)}</span>
+          <div>
+            <p className="text-white font-semibold text-sm leading-tight">
+              {getCountryName(point.country)}
+            </p>
+            <p className="text-slate-400 text-xs mt-0.5">{point.careerStage}</p>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          aria-label="Back to feed"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-5">
+
+        {/* Quote */}
+        <div className="relative pl-4 border-l-2 border-blue-500">
+          <p className="text-slate-200 text-sm leading-relaxed italic">
+            &ldquo;{point.highlight}&rdquo;
+          </p>
+        </div>
+
+        {/* Metadata */}
+        <div className="space-y-2">
+          <p className="text-xs text-slate-500 uppercase tracking-widest">Details</p>
+          <div className="flex flex-wrap gap-2">
+            <span className="px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs">
+              {getSpecialtyName(point.metadata.specialty)}
+            </span>
+            <span className="px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs">
+              {getLanguageName(point.metadata.language)}
+            </span>
+            <span className="px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs">
+              {point.metadata.practiceSetting}
+            </span>
+          </div>
+        </div>
+
+        {/* Career Stage pill */}
+        <div className="space-y-2">
+          <p className="text-xs text-slate-500 uppercase tracking-widest">Career Stage</p>
+          <div className="flex items-center gap-2">
+            <span
+              className="w-2.5 h-2.5 rounded-full"
+              style={{ backgroundColor: getCareerStageColor(point.careerStage) }}
+            />
+            <span className="text-slate-300 text-sm">{point.careerStage}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer — back button */}
+      <div className="px-4 py-3 border-t border-slate-800/50">
+        <button
+          onClick={onClose}
+          className="w-full py-2 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to feed
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function getCountryFlag(code: string): string {
   const codePoints = code
     .toUpperCase()
     .split('')
     .map((char) => 127397 + char.charCodeAt(0));
   return String.fromCodePoint(...codePoints);
+}
+
+function getCareerStageColor(stage: string): string {
+  switch (stage) {
+    case 'Trainee':      return '#22d3ee';
+    case 'Early-career': return '#34d399';
+    case 'Mid-career':   return '#fbbf24';
+    case 'Senior':       return '#a78bfa';
+    default:             return '#64748b';
+  }
 }
