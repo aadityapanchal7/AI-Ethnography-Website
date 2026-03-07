@@ -1,4 +1,4 @@
-'use client';
+use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { MapDataPoint } from '@/lib/types';
@@ -100,10 +100,7 @@ export default function Globe({ data, onPointClick, selectedPointId }: GlobeProp
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
-                <span
-                  className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: getCareerStageColor(point.careerStage) }}
-                />
+                <span className="text-base">{getCountryFlag(point.country)}</span>
                 <span className="text-white text-sm font-medium">{point.country}</span>
               </div>
               <p className="text-slate-400 text-xs truncate">{point.highlight}</p>
@@ -122,18 +119,36 @@ export default function Globe({ data, onPointClick, selectedPointId }: GlobeProp
         globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
         bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
         backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
+
+        // ── Dot markers ──────────────────────────────────────────────
         pointsData={pointsData}
         pointLat="lat"
         pointLng="lng"
         pointAltitude={0.01}
         pointRadius="size"
         pointColor="color"
+
+        // ── Floating flag labels above each marker ───────────────────
+        labelsData={pointsData}
+        labelLat="lat"
+        labelLng="lng"
+        labelAltitude={0.04}
+        labelText={(d: object) => {
+          const point = d as MapDataPoint;
+          return getCountryFlag(point.country);
+        }}
+        labelSize={1.6}
+        labelDotRadius={0}
+        labelColor={() => 'rgba(255,255,255,0)'}
+        labelResolution={3}
+
+        // ── Hover tooltip ────────────────────────────────────────────
         pointLabel={(d: object) => {
           const point = d as MapDataPoint;
           return `
             <div style="background: rgba(15, 23, 42, 0.95); padding: 12px; border-radius: 12px; border: 1px solid rgba(51, 65, 85, 0.5); max-width: 250px;">
               <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                <span style="width: 8px; height: 8px; border-radius: 50%; background: ${getCareerStageColor(point.careerStage)}"></span>
+                <span style="font-size: 16px;">${getCountryFlag(point.country)}</span>
                 <span style="color: white; font-weight: 600;">${point.country}</span>
                 <span style="color: #94a3b8; font-size: 12px;">${point.careerStage}</span>
               </div>
@@ -141,13 +156,14 @@ export default function Globe({ data, onPointClick, selectedPointId }: GlobeProp
             </div>
           `;
         }}
+
         onPointClick={handlePointClick}
         enablePointerInteraction={true}
         animateIn={true}
         atmosphereColor="#3b82f6"
         atmosphereAltitude={0.25}
       />
-      
+
       {/* Legend */}
       <div className="absolute bottom-4 left-4 bg-slate-900/90 backdrop-blur rounded-xl p-3 border border-slate-700/50">
         <h4 className="text-xs text-slate-400 uppercase tracking-wide mb-2">Career Stage</h4>
@@ -167,18 +183,25 @@ export default function Globe({ data, onPointClick, selectedPointId }: GlobeProp
   );
 }
 
-function getCareerStageColor(stage: string): string {
-  switch (stage) {
-    case 'Trainee':
-      return '#22d3ee'; // cyan
-    case 'Early-career':
-      return '#34d399'; // emerald
-    case 'Mid-career':
-      return '#fbbf24'; // amber
-    case 'Senior':
-      return '#a78bfa'; // violet
-    default:
-      return '#64748b'; // slate
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function getCountryFlag(code: string): string {
+  try {
+    const codePoints = code
+      .toUpperCase()
+      .split('')
+      .map((char) => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+  } catch {
+    return '🌐';
   }
 }
 
+function getCareerStageColor(stage: string): string {
+  switch (stage) {
+    case 'Trainee':      return '#22d3ee';
+    case 'Early-career': return '#34d399';
+    case 'Mid-career':   return '#fbbf24';
+    case 'Senior':       return '#a78bfa';
+    default:             return '#64748b';
+  }
