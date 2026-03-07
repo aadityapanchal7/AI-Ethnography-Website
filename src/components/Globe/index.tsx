@@ -59,6 +59,13 @@ export default function Globe({ data, onPointClick, selectedPointId }: GlobeProp
     color: selectedPointId === point.id ? '#f472b6' : getCareerStageColor(point.careerStage),
   }));
 
+  // HTML elements data for flag emojis — rendered as real DOM elements on the globe
+  const htmlData = data.map((point) => ({
+    ...point,
+    lat: point.coordinates.lat,
+    lng: point.coordinates.lng,
+  }));
+
   if (isLoading) {
     return (
       <div
@@ -128,19 +135,22 @@ export default function Globe({ data, onPointClick, selectedPointId }: GlobeProp
         pointRadius="size"
         pointColor="color"
 
-        // ── Floating flag labels above each marker ───────────────────
-        labelsData={pointsData}
-        labelLat="lat"
-        labelLng="lng"
-        labelAltitude={0.04}
-        labelText={(d: object) => {
+        // ── HTML flag emoji elements (real DOM, supports emoji) ───────
+        htmlElementsData={htmlData}
+        htmlLat="lat"
+        htmlLng="lng"
+        htmlAltitude={0.05}
+        htmlElement={(d: object) => {
           const point = d as MapDataPoint;
-          return getCountryFlag(point.country);
+          const el = document.createElement('div');
+          el.innerHTML = getCountryFlag(point.country);
+          el.style.fontSize = '18px';
+          el.style.lineHeight = '1';
+          el.style.pointerEvents = 'none';
+          el.style.userSelect = 'none';
+          el.style.transform = 'translate(-50%, -100%)';
+          return el;
         }}
-        labelSize={1.6}
-        labelDotRadius={0}
-        labelColor={() => 'rgba(255,255,255,0)'}
-        labelResolution={3}
 
         // ── Hover tooltip ────────────────────────────────────────────
         pointLabel={(d: object) => {
