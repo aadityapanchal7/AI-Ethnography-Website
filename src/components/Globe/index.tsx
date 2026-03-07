@@ -55,11 +55,11 @@ export default function Globe({ data, onPointClick, selectedPointId }: GlobeProp
     ...point,
     lat: point.coordinates.lat,
     lng: point.coordinates.lng,
-    size: selectedPointId === point.id ? 0.8 : 0.4,
+    size: selectedPointId === point.id ? 1.5 : 0.8,
     color: selectedPointId === point.id ? '#f472b6' : getCareerStageColor(point.careerStage),
   }));
 
-  // HTML elements data for flag emojis — rendered as real DOM elements on the globe
+  // HTML elements data for country name labels
   const htmlData = data.map((point) => ({
     ...point,
     lat: point.coordinates.lat,
@@ -85,7 +85,6 @@ export default function Globe({ data, onPointClick, selectedPointId }: GlobeProp
   }
 
   if (!GlobeGL) {
-    // Fallback to simple map view if globe fails to load
     return (
       <div
         ref={containerRef}
@@ -107,8 +106,13 @@ export default function Globe({ data, onPointClick, selectedPointId }: GlobeProp
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-base">{getCountryFlag(point.country)}</span>
-                <span className="text-white text-sm font-medium">{point.country}</span>
+                <span
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: getCareerStageColor(point.careerStage) }}
+                />
+                <span className="text-white text-sm font-medium">
+                  {getCountryName(point.country)}
+                </span>
               </div>
               <p className="text-slate-400 text-xs truncate">{point.highlight}</p>
             </button>
@@ -135,31 +139,41 @@ export default function Globe({ data, onPointClick, selectedPointId }: GlobeProp
         pointRadius="size"
         pointColor="color"
 
-        // ── HTML flag emoji elements (real DOM, supports emoji) ───────
+        // ── HTML country name labels above each marker ────────────────
         htmlElementsData={htmlData}
         htmlLat="lat"
         htmlLng="lng"
         htmlAltitude={0.05}
         htmlElement={(d: object) => {
           const point = d as MapDataPoint;
+          const isSelected = selectedPointId === point.id;
+          const color = isSelected ? '#f472b6' : getCareerStageColor(point.careerStage);
           const el = document.createElement('div');
-          el.innerHTML = getCountryFlag(point.country);
-          el.style.fontSize = '18px';
-          el.style.lineHeight = '1';
+          el.innerText = getCountryName(point.country);
+          el.style.color = color;
+          el.style.fontSize = '11px';
+          el.style.fontWeight = '600';
+          el.style.fontFamily = 'system-ui, sans-serif';
+          el.style.background = 'rgba(10, 15, 30, 0.75)';
+          el.style.padding = '2px 6px';
+          el.style.borderRadius = '4px';
+          el.style.whiteSpace = 'nowrap';
           el.style.pointerEvents = 'none';
           el.style.userSelect = 'none';
-          el.style.transform = 'translate(-50%, -100%)';
+          el.style.transform = 'translate(-50%, -130%)';
+          el.style.border = `1px solid ${color}40`;
           return el;
         }}
 
         // ── Hover tooltip ────────────────────────────────────────────
         pointLabel={(d: object) => {
           const point = d as MapDataPoint;
+          const color = getCareerStageColor(point.careerStage);
           return `
             <div style="background: rgba(15, 23, 42, 0.95); padding: 12px; border-radius: 12px; border: 1px solid rgba(51, 65, 85, 0.5); max-width: 250px;">
               <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                <span style="font-size: 16px;">${getCountryFlag(point.country)}</span>
-                <span style="color: white; font-weight: 600;">${point.country}</span>
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: ${color};"></span>
+                <span style="color: white; font-weight: 600;">${getCountryName(point.country)}</span>
                 <span style="color: #94a3b8; font-size: 12px;">${point.careerStage}</span>
               </div>
               <p style="color: #cbd5e1; font-size: 13px; line-height: 1.4;">"${point.highlight}"</p>
@@ -195,16 +209,26 @@ export default function Globe({ data, onPointClick, selectedPointId }: GlobeProp
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function getCountryFlag(code: string): string {
-  try {
-    const codePoints = code
-      .toUpperCase()
-      .split('')
-      .map((char) => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
-  } catch {
-    return '🌐';
-  }
+function getCountryName(code: string): string {
+  const names: Record<string, string> = {
+    AF: 'Afghanistan', AL: 'Albania', DZ: 'Algeria', AR: 'Argentina',
+    AU: 'Australia', AT: 'Austria', BE: 'Belgium', BR: 'Brazil',
+    CA: 'Canada', CL: 'Chile', CN: 'China', CO: 'Colombia',
+    HR: 'Croatia', CZ: 'Czech Republic', DK: 'Denmark', EG: 'Egypt',
+    ET: 'Ethiopia', FI: 'Finland', FR: 'France', DE: 'Germany',
+    GH: 'Ghana', GR: 'Greece', HU: 'Hungary', IN: 'India',
+    ID: 'Indonesia', IE: 'Ireland', IL: 'Israel', IT: 'Italy',
+    JP: 'Japan', JO: 'Jordan', KE: 'Kenya', KR: 'South Korea',
+    MX: 'Mexico', MA: 'Morocco', NL: 'Netherlands', NZ: 'New Zealand',
+    NG: 'Nigeria', NO: 'Norway', PK: 'Pakistan', PE: 'Peru',
+    PH: 'Philippines', PL: 'Poland', PT: 'Portugal', RO: 'Romania',
+    RU: 'Russia', SA: 'Saudi Arabia', SN: 'Senegal', ZA: 'South Africa',
+    ES: 'Spain', SE: 'Sweden', CH: 'Switzerland', TZ: 'Tanzania',
+    TH: 'Thailand', TR: 'Turkey', UG: 'Uganda', UA: 'Ukraine',
+    GB: 'United Kingdom', US: 'United States', UY: 'Uruguay',
+    VN: 'Vietnam', ZW: 'Zimbabwe',
+  };
+  return names[code.toUpperCase()] ?? code;
 }
 
 function getCareerStageColor(stage: string): string {
