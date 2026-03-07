@@ -205,3 +205,4 @@ function getCareerStageColor(stage: string): string {
     case 'Senior':       return '#a78bfa';
     default:             return '#64748b';
   }
+}
