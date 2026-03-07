@@ -23,6 +23,8 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [pulseSize, setPulseSize] = useState(1.2);
+  const [isAutoRotating, setIsAutoRotating] = useState(true);
+  const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Expose flyTo to parent via ref
   useImperativeHandle(ref, () => ({
@@ -58,10 +60,21 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
+  // Stop auto-rotate when a point is selected, resume when deselected
+  useEffect(() => {
+    if (selectedPointId) {
+      setIsAutoRotating(false);
+    } else {
+      // Resume after 3s of inactivity when deselected
+      const timer = setTimeout(() => setIsAutoRotating(true), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedPointId]);
+
   // Smooth sine-wave pulse — only runs when a marker is selected
   useEffect(() => {
     if (!selectedPointId) {
-      setPulseSize(1.2); // reset when deselected
+      setPulseSize(1.2);
       return;
     }
 
@@ -77,7 +90,6 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
       const t = elapsed < duration
         ? elapsed / duration
         : 1 - (elapsed - duration) / duration;
-      // ease in-out sine for buttery smooth up AND down
       const eased = 0.5 - Math.cos(t * Math.PI) / 2;
       setPulseSize(min + (max - min) * eased);
       frame = requestAnimationFrame(animate);
@@ -95,7 +107,16 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
     [onPointClick]
   );
 
-  // Only the selected marker gets the pulse size — all others stay fixed at 0.8
+  // Stop auto-rotate on user drag, resume after 5s of inactivity
+  const handleGlobeClick = useCallback(() => {
+    setIsAutoRotating(false);
+    if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+    if (!selectedPointId) {
+      resumeTimerRef.current = setTimeout(() => setIsAutoRotating(true), 5000);
+    }
+  }, [selectedPointId]);
+
+  // Only selected marker pulses — all others fixed at 0.8
   const pointsData = data.map((point) => {
     const isSelected = selectedPointId === point.id;
     return {
@@ -180,6 +201,9 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
         bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
         backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
 
+        // ── Auto-rotate ───────────────────────────────────────────────
+        enablePointerInteraction={true}
+
         // ── Dot markers ──────────────────────────────────────────────
         pointsData={pointsData}
         pointLat="lat"
@@ -233,11 +257,22 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
         }}
 
         onPointClick={handlePointClick}
-        enablePointerInteraction={true}
+        onGlobeClick={handleGlobeClick}
         animateIn={true}
         atmosphereColor="#3b82f6"
         atmosphereAltitude={0.25}
       />
+
+      {/* Auto-rotate indicator */}
+      <div className="absolute top-4 left-4 flex items-center gap-2 bg-slate-900/80 backdrop-blur px-3 py-1.5 rounded-full border border-slate-700/50">
+        <span
+          className={`w-2 h-2 rounded-full ${isAutoRotating ? 'bg-green-400' : 'bg-slate-500'}`}
+          style={isAutoRotating ? { boxShadow: '0 0 6px #4ade80' } : {}}
+        />
+        <span className="text-slate-400 text-xs">
+          {isAutoRotating ? 'Auto-rotating' : 'Paused'}
+        </span>
+      </div>
 
       {/* Legend */}
       <div className="absolute bottom-4 left-4 bg-slate-900/90 backdrop-blur rounded-xl p-3 border border-slate-700/50">
@@ -282,4 +317,3 @@ function getCountryName(code: string): string {
   };
   return names[code.toUpperCase()] ?? code;
 }
-
