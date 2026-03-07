@@ -22,6 +22,7 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
   const [GlobeGL, setGlobeGL] = useState<React.ComponentType<Record<string, unknown>> | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [isLoading, setIsLoading] = useState(true);
+  const [pulse, setPulse] = useState(false);
 
   // Expose flyTo to parent via ref
   useImperativeHandle(ref, () => ({
@@ -57,6 +58,18 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
+  // Pulse the selected marker — only runs when a marker is selected
+  useEffect(() => {
+    if (!selectedPointId) {
+      setPulse(false);
+      return;
+    }
+    const interval = setInterval(() => {
+      setPulse((p) => !p);
+    }, 600);
+    return () => clearInterval(interval);
+  }, [selectedPointId]);
+
   const handlePointClick = useCallback(
     (point: object) => {
       const typedPoint = point as MapDataPoint;
@@ -65,14 +78,17 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
     [onPointClick]
   );
 
-  // Neon green by default, neon pink when selected
-  const pointsData = data.map((point) => ({
-    ...point,
-    lat: point.coordinates.lat,
-    lng: point.coordinates.lng,
-    size: selectedPointId === point.id ? 1.5 : 0.8,
-    color: selectedPointId === point.id ? '#ff2d78' : '#39ff14',
-  }));
+  // Neon green by default, neon pink + pulsing when selected
+  const pointsData = data.map((point) => {
+    const isSelected = selectedPointId === point.id;
+    return {
+      ...point,
+      lat: point.coordinates.lat,
+      lng: point.coordinates.lng,
+      size: isSelected ? (pulse ? 1.8 : 1.2) : 0.8,
+      color: isSelected ? '#ff2d78' : '#39ff14',
+    };
+  });
 
   // HTML elements for country name labels
   const htmlData = data.map((point) => ({
