@@ -65,17 +65,16 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
     [onPointClick]
   );
 
-  // Convert data to globe format
+  // Neon green by default, neon pink when selected
   const pointsData = data.map((point) => ({
     ...point,
     lat: point.coordinates.lat,
     lng: point.coordinates.lng,
     size: selectedPointId === point.id ? 1.5 : 0.8,
-    color: selectedPointId === point.id ? '#f472b6' : getCareerStageColor(point.careerStage),
+    color: selectedPointId === point.id ? '#ff2d78' : '#39ff14',
   }));
 
-  // HTML elements for country name labels — positioned slightly offset so they
-  // don't sit directly on top of the clickable marker dot
+  // HTML elements for country name labels
   const htmlData = data.map((point) => ({
     ...point,
     lat: point.coordinates.lat,
@@ -117,14 +116,14 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
               onClick={() => onPointClick(point)}
               className={`p-3 rounded-xl text-left transition-all ${
                 selectedPointId === point.id
-                  ? 'bg-blue-500/20 border-2 border-blue-500'
+                  ? 'bg-pink-500/20 border-2 border-pink-500'
                   : 'bg-slate-800/50 border border-slate-700 hover:border-slate-600'
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
                 <span
                   className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: getCareerStageColor(point.careerStage) }}
+                  style={{ backgroundColor: selectedPointId === point.id ? '#ff2d78' : '#39ff14' }}
                 />
                 <span className="text-white text-sm font-medium">
                   {getCountryName(point.country)}
@@ -156,7 +155,7 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
         pointRadius="size"
         pointColor="color"
 
-        // ── Country name labels — raised higher so they don't block clicks ──
+        // ── Country name labels ───────────────────────────────────────
         htmlElementsData={htmlData}
         htmlLat="lat"
         htmlLng="lng"
@@ -164,7 +163,7 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
         htmlElement={(d: object) => {
           const point = d as MapDataPoint;
           const isSelected = selectedPointId === point.id;
-          const color = isSelected ? '#f472b6' : getCareerStageColor(point.careerStage);
+          const color = isSelected ? '#ff2d78' : '#39ff14';
           const el = document.createElement('div');
           el.innerText = getCountryName(point.country);
           el.style.color = color;
@@ -186,7 +185,8 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
         // ── Hover tooltip ────────────────────────────────────────────
         pointLabel={(d: object) => {
           const point = d as MapDataPoint;
-          const color = getCareerStageColor(point.careerStage);
+          const isSelected = selectedPointId === point.id;
+          const color = isSelected ? '#ff2d78' : '#39ff14';
           return `
             <div style="background: rgba(15, 23, 42, 0.95); padding: 12px; border-radius: 12px; border: 1px solid rgba(51, 65, 85, 0.5); max-width: 250px;">
               <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
@@ -208,17 +208,16 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
 
       {/* Legend */}
       <div className="absolute bottom-4 left-4 bg-slate-900/90 backdrop-blur rounded-xl p-3 border border-slate-700/50">
-        <h4 className="text-xs text-slate-400 uppercase tracking-wide mb-2">Career Stage</h4>
-        <div className="space-y-1">
-          {(['Trainee', 'Early-career', 'Mid-career', 'Senior'] as const).map((stage) => (
-            <div key={stage} className="flex items-center gap-2">
-              <span
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: getCareerStageColor(stage) }}
-              />
-              <span className="text-slate-300 text-xs">{stage}</span>
-            </div>
-          ))}
+        <h4 className="text-xs text-slate-400 uppercase tracking-wide mb-2">Markers</h4>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#39ff14', boxShadow: '0 0 6px #39ff14' }} />
+            <span className="text-slate-300 text-xs">Story marker</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ff2d78', boxShadow: '0 0 6px #ff2d78' }} />
+            <span className="text-slate-300 text-xs">Selected story</span>
+          </div>
         </div>
       </div>
     </div>
@@ -249,14 +248,4 @@ function getCountryName(code: string): string {
     VN: 'Vietnam', ZW: 'Zimbabwe',
   };
   return names[code.toUpperCase()] ?? code;
-}
-
-function getCareerStageColor(stage: string): string {
-  switch (stage) {
-    case 'Trainee':      return '#22d3ee';
-    case 'Early-career': return '#34d399';
-    case 'Mid-career':   return '#fbbf24';
-    case 'Senior':       return '#a78bfa';
-    default:             return '#64748b';
-  }
 }
