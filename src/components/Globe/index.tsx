@@ -60,18 +60,39 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
+  // Control auto-rotate via Three.js OrbitControls on the globe ref
+  useEffect(() => {
+    if (!globeRef.current) return;
+    const controls = globeRef.current.controls?.() as Record<string, unknown> | undefined;
+    if (!controls) return;
+    controls.autoRotate = isAutoRotating;
+    controls.autoRotateSpeed = 0.5;
+  }, [isAutoRotating, GlobeGL]);
+
+  // Also set autoRotate once the globe first loads
+  useEffect(() => {
+    if (!GlobeGL) return;
+    const timer = setTimeout(() => {
+      if (!globeRef.current) return;
+      const controls = globeRef.current.controls?.() as Record<string, unknown> | undefined;
+      if (!controls) return;
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.5;
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [GlobeGL]);
+
   // Stop auto-rotate when a point is selected, resume when deselected
   useEffect(() => {
     if (selectedPointId) {
       setIsAutoRotating(false);
     } else {
-      // Resume after 3s of inactivity when deselected
-      const timer = setTimeout(() => setIsAutoRotating(true), 3000);
-      return () => clearTimeout(timer);
+      if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
+      resumeTimerRef.current = setTimeout(() => setIsAutoRotating(true), 3000);
     }
   }, [selectedPointId]);
 
-  // Smooth sine-wave pulse — only runs when a marker is selected
+  // Smooth sine-wave pulse — only for selected marker
   useEffect(() => {
     if (!selectedPointId) {
       setPulseSize(1.2);
@@ -107,7 +128,7 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
     [onPointClick]
   );
 
-  // Stop auto-rotate on user drag, resume after 5s of inactivity
+  // Stop auto-rotate on user drag, resume after 5s
   const handleGlobeClick = useCallback(() => {
     setIsAutoRotating(false);
     if (resumeTimerRef.current) clearTimeout(resumeTimerRef.current);
@@ -128,7 +149,6 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
     };
   });
 
-  // HTML elements for country name labels
   const htmlData = data.map((point) => ({
     ...point,
     lat: point.coordinates.lat,
@@ -201,9 +221,6 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
         bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
         backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
 
-        // ── Auto-rotate ───────────────────────────────────────────────
-        enablePointerInteraction={true}
-
         // ── Dot markers ──────────────────────────────────────────────
         pointsData={pointsData}
         pointLat="lat"
@@ -258,6 +275,7 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
 
         onPointClick={handlePointClick}
         onGlobeClick={handleGlobeClick}
+        enablePointerInteraction={true}
         animateIn={true}
         atmosphereColor="#3b82f6"
         atmosphereAltitude={0.25}
@@ -266,8 +284,11 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
       {/* Auto-rotate indicator */}
       <div className="absolute top-4 left-4 flex items-center gap-2 bg-slate-900/80 backdrop-blur px-3 py-1.5 rounded-full border border-slate-700/50">
         <span
-          className={`w-2 h-2 rounded-full ${isAutoRotating ? 'bg-green-400' : 'bg-slate-500'}`}
-          style={isAutoRotating ? { boxShadow: '0 0 6px #4ade80' } : {}}
+          className="w-2 h-2 rounded-full"
+          style={{
+            backgroundColor: isAutoRotating ? '#4ade80' : '#64748b',
+            boxShadow: isAutoRotating ? '0 0 6px #4ade80' : 'none',
+          }}
         />
         <span className="text-slate-400 text-xs">
           {isAutoRotating ? 'Auto-rotating' : 'Paused'}
