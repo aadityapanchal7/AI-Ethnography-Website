@@ -9,7 +9,6 @@ interface GlobeProps {
   selectedPointId?: string | null;
 }
 
-// What the parent can call via ref
 export interface GlobeHandle {
   flyTo: (lat: number, lng: number) => void;
 }
@@ -75,7 +74,8 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
     color: selectedPointId === point.id ? '#f472b6' : getCareerStageColor(point.careerStage),
   }));
 
-  // HTML elements data for country name labels
+  // HTML elements for country name labels — positioned slightly offset so they
+  // don't sit directly on top of the clickable marker dot
   const htmlData = data.map((point) => ({
     ...point,
     lat: point.coordinates.lat,
@@ -152,15 +152,15 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
         pointsData={pointsData}
         pointLat="lat"
         pointLng="lng"
-        pointAltitude={0.01}
+        pointAltitude={0.02}
         pointRadius="size"
         pointColor="color"
 
-        // ── HTML country name labels above each marker ────────────────
+        // ── Country name labels — raised higher so they don't block clicks ──
         htmlElementsData={htmlData}
         htmlLat="lat"
         htmlLng="lng"
-        htmlAltitude={0.05}
+        htmlAltitude={0.12}
         htmlElement={(d: object) => {
           const point = d as MapDataPoint;
           const isSelected = selectedPointId === point.id;
@@ -177,8 +177,9 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
           el.style.whiteSpace = 'nowrap';
           el.style.pointerEvents = 'none';
           el.style.userSelect = 'none';
-          el.style.transform = 'translate(-50%, -130%)';
+          el.style.transform = 'translate(-50%, -50%)';
           el.style.border = `1px solid ${color}40`;
+          el.style.cursor = 'default';
           return el;
         }}
 
@@ -259,4 +260,3 @@ function getCareerStageColor(stage: string): string {
     default:             return '#64748b';
   }
 }
-
