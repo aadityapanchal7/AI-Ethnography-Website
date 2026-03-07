@@ -37,7 +37,6 @@ export default function ExplorePage() {
   const [activeTab, setActiveTab] = useState<TabType>('highlights');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Fetch data on mount
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
@@ -59,7 +58,6 @@ export default function ExplorePage() {
     fetchData();
   }, []);
 
-  // Filter data when theme is selected
   useEffect(() => {
     async function filterData() {
       if (selectedThemeId) {
@@ -106,7 +104,6 @@ export default function ExplorePage() {
     setSelectedPoint(null);
   }, []);
 
-  // Get display names
   const getCountryName = (code: string) =>
     countries.find((c) => c.code === code)?.name || code;
   const getLanguageName = (code: string) =>
@@ -116,8 +113,6 @@ export default function ExplorePage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col">
-
-      {/* Main Content */}
       <div className="flex-1 flex flex-col lg:flex-row">
 
         {/* Globe Section */}
@@ -129,42 +124,64 @@ export default function ExplorePage() {
           />
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar — stronger visual separation */}
         <aside
-          className={`w-full lg:w-96 bg-slate-900/95 backdrop-blur border-t lg:border-t-0 lg:border-l border-slate-800/50 flex flex-col transition-transform duration-300 ${
+          className={`w-full lg:w-96 flex flex-col transition-transform duration-300 ${
             isSidebarOpen ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'
           } fixed lg:relative bottom-0 left-0 right-0 h-[70vh] lg:h-auto z-40 lg:z-0 rounded-t-2xl lg:rounded-none`}
+          style={{
+            background: 'linear-gradient(180deg, #0f172a 0%, #0c1427 100%)',
+            borderLeft: '1px solid rgba(99, 102, 241, 0.2)',
+            boxShadow: '-8px 0 32px rgba(0, 0, 0, 0.5), inset 1px 0 0 rgba(99, 102, 241, 0.1)',
+          }}
         >
           {/* Mobile Handle */}
           <div className="lg:hidden flex justify-center py-2 border-b border-slate-800/50">
-            <div className="w-12 h-1 rounded-full bg-slate-700" />
+            <div className="w-12 h-1 rounded-full bg-slate-600" />
           </div>
 
-          {/* Tab Switcher — hidden when a point is selected */}
-          {!selectedPoint && (
-            <div className="flex border-b border-slate-800/50">
-              <button
-                onClick={() => setActiveTab('highlights')}
-                className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'highlights'
-                    ? 'text-white border-b-2 border-blue-500'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Highlights
-              </button>
-              <button
-                onClick={() => setActiveTab('themes')}
-                className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                  activeTab === 'themes'
-                    ? 'text-white border-b-2 border-blue-500'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Themes
-              </button>
+          {/* Sidebar Header */}
+          <div
+            className="px-4 py-3 border-b border-slate-800/60"
+            style={{ background: 'rgba(15, 23, 42, 0.8)' }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-white font-semibold text-sm tracking-wide">
+                {selectedPoint ? 'Story Detail' : 'Explore Stories'}
+              </h2>
+              {!isLoading && !selectedPoint && (
+                <span className="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
+                  {highlights.length} voices
+                </span>
+              )}
             </div>
-          )}
+
+            {/* Tab Switcher — hidden when a point is selected */}
+            {!selectedPoint && (
+              <div className="flex gap-1 bg-slate-800/60 rounded-lg p-1">
+                <button
+                  onClick={() => setActiveTab('highlights')}
+                  className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    activeTab === 'highlights'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Highlights
+                </button>
+                <button
+                  onClick={() => setActiveTab('themes')}
+                  className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${
+                    activeTab === 'themes'
+                      ? 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Themes
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Tab Content */}
           <div className="flex-1 overflow-hidden">
@@ -200,7 +217,7 @@ export default function ExplorePage() {
       {/* Sidebar Backdrop (Mobile) */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/60 z-30 lg:hidden backdrop-blur-sm"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
@@ -228,7 +245,12 @@ function PointDetailPanel({
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/50">
         <div className="flex items-center gap-3">
-          <span className="text-2xl">{getCountryFlag(point.country)}</span>
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+            style={{ backgroundColor: getCareerStageColor(point.careerStage) + '30', color: getCareerStageColor(point.careerStage) }}
+          >
+            {point.country}
+          </div>
           <div>
             <p className="text-white font-semibold text-sm leading-tight">
               {getCountryName(point.country)}
@@ -249,9 +271,8 @@ function PointDetailPanel({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-5">
-
         {/* Quote */}
-        <div className="relative pl-4 border-l-2 border-blue-500">
+        <div className="relative pl-4 border-l-2 border-blue-500 bg-slate-800/30 rounded-r-xl py-3 pr-3">
           <p className="text-slate-200 text-sm leading-relaxed italic">
             &ldquo;{point.highlight}&rdquo;
           </p>
@@ -273,7 +294,7 @@ function PointDetailPanel({
           </div>
         </div>
 
-        {/* Career Stage pill */}
+        {/* Career Stage */}
         <div className="space-y-2">
           <p className="text-xs text-slate-500 uppercase tracking-widest">Career Stage</p>
           <div className="flex items-center gap-2">
@@ -286,7 +307,7 @@ function PointDetailPanel({
         </div>
       </div>
 
-      {/* Footer — back button */}
+      {/* Footer */}
       <div className="px-4 py-3 border-t border-slate-800/50">
         <button
           onClick={onClose}
