@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import type { MapDataPoint } from '@/lib/types';
 
 interface GlobeProps {
@@ -9,12 +9,29 @@ interface GlobeProps {
   selectedPointId?: string | null;
 }
 
-// Dynamic import for react-globe.gl since it requires window
-export default function Globe({ data, onPointClick, selectedPointId }: GlobeProps) {
+// What the parent can call via ref
+export interface GlobeHandle {
+  flyTo: (lat: number, lng: number) => void;
+}
+
+const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
+  { data, onPointClick, selectedPointId },
+  ref
+) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const globeRef = useRef<Record<string, unknown>>(null);
   const [GlobeGL, setGlobeGL] = useState<React.ComponentType<Record<string, unknown>> | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [isLoading, setIsLoading] = useState(true);
+
+  // Expose flyTo to parent via ref
+  useImperativeHandle(ref, () => ({
+    flyTo(lat: number, lng: number) {
+      if (globeRef.current && typeof globeRef.current.pointOfView === 'function') {
+        globeRef.current.pointOfView({ lat, lng, altitude: 1.5 }, 1000);
+      }
+    },
+  }));
 
   // Dynamically import react-globe.gl
   useEffect(() => {
@@ -36,7 +53,6 @@ export default function Globe({ data, onPointClick, selectedPointId }: GlobeProp
         });
       }
     };
-
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
     return () => window.removeEventListener('resize', updateDimensions);
@@ -125,6 +141,7 @@ export default function Globe({ data, onPointClick, selectedPointId }: GlobeProp
   return (
     <div ref={containerRef} className="w-full h-full relative">
       <GlobeGL
+        ref={globeRef}
         width={dimensions.width || 400}
         height={dimensions.height || 400}
         globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
@@ -205,7 +222,9 @@ export default function Globe({ data, onPointClick, selectedPointId }: GlobeProp
       </div>
     </div>
   );
-}
+});
+
+export default Globe;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -240,3 +259,4 @@ function getCareerStageColor(stage: string): string {
     default:             return '#64748b';
   }
 }
+
