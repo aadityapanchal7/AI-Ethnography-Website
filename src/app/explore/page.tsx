@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import HighlightsFeed from '@/components/HighlightsFeed';
 import ThemesPanel from '@/components/ThemesPanel';
 import type { Testimonial, Theme, MapDataPoint } from '@/lib/types';
 import { getHighlights, getMapData, getThemes } from '@/lib/api';
 import { countries, languages, specialties } from '@/lib/mockData';
+import type { GlobeHandle } from '@/components/Globe';
 
 // Dynamically import Globe to avoid SSR issues
 const Globe = dynamic(() => import('@/components/Globe'), {
@@ -28,6 +29,7 @@ const Globe = dynamic(() => import('@/components/Globe'), {
 type TabType = 'highlights' | 'themes';
 
 export default function ExplorePage() {
+  const globeRef = useRef<GlobeHandle>(null);
   const [mapData, setMapData] = useState<MapDataPoint[]>([]);
   const [highlights, setHighlights] = useState<Testimonial[]>([]);
   const [themes, setThemes] = useState<Theme[]>([]);
@@ -79,16 +81,23 @@ export default function ExplorePage() {
     filterData();
   }, [selectedThemeId]);
 
+  // Clicking a globe marker → show detail + open sidebar
   const handlePointClick = useCallback((point: MapDataPoint) => {
     setSelectedPoint(point);
     setIsSidebarOpen(true);
   }, []);
 
+  // Clicking a sidebar story → fly globe camera to that marker + show detail
   const handleHighlightClick = useCallback((testimonial: Testimonial) => {
     const point = mapData.find((p) => p.id === testimonial.id);
     if (point) {
       setSelectedPoint(point);
       setIsSidebarOpen(true);
+      // Fly the globe camera to this marker
+      globeRef.current?.flyTo(
+        point.coordinates.lat,
+        point.coordinates.lng
+      );
     }
   }, [mapData]);
 
@@ -118,13 +127,14 @@ export default function ExplorePage() {
         {/* Globe Section */}
         <div className="flex-1 relative min-h-[400px] lg:min-h-0">
           <Globe
+            ref={globeRef}
             data={mapData}
             onPointClick={handlePointClick}
             selectedPointId={selectedPoint?.id}
           />
         </div>
 
-        {/* Sidebar — stronger visual separation */}
+        {/* Sidebar */}
         <aside
           className={`w-full lg:w-96 flex flex-col transition-transform duration-300 ${
             isSidebarOpen ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'
@@ -247,7 +257,10 @@ function PointDetailPanel({
         <div className="flex items-center gap-3">
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-            style={{ backgroundColor: getCareerStageColor(point.careerStage) + '30', color: getCareerStageColor(point.careerStage) }}
+            style={{
+              backgroundColor: getCareerStageColor(point.careerStage) + '30',
+              color: getCareerStageColor(point.careerStage),
+            }}
           >
             {point.country}
           </div>
@@ -324,14 +337,6 @@ function PointDetailPanel({
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getCountryFlag(code: string): string {
-  const codePoints = code
-    .toUpperCase()
-    .split('')
-    .map((char) => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
-}
 
 function getCareerStageColor(stage: string): string {
   switch (stage) {
