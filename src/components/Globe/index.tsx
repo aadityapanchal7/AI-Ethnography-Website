@@ -22,7 +22,7 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
   const [GlobeGL, setGlobeGL] = useState<React.ComponentType<Record<string, unknown>> | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [isLoading, setIsLoading] = useState(true);
-  const [pulse, setPulse] = useState(false);
+  const [pulseSize, setPulseSize] = useState(1.2);
 
   // Expose flyTo to parent via ref
   useImperativeHandle(ref, () => ({
@@ -58,16 +58,33 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
     return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
-  // Pulse the selected marker — only runs when a marker is selected
+  // Smooth sine-wave pulse — only runs when a marker is selected
   useEffect(() => {
     if (!selectedPointId) {
-      setPulse(false);
+      setPulseSize(1.2); // reset when deselected
       return;
     }
-    const interval = setInterval(() => {
-      setPulse((p) => !p);
-    }, 600);
-    return () => clearInterval(interval);
+
+    let frame: number;
+    let start: number | null = null;
+    const duration = 900;
+    const min = 1.1;
+    const max = 1.8;
+
+    function animate(timestamp: number) {
+      if (!start) start = timestamp;
+      const elapsed = (timestamp - start) % (duration * 2);
+      const t = elapsed < duration
+        ? elapsed / duration
+        : 1 - (elapsed - duration) / duration;
+      // ease in-out sine for buttery smooth up AND down
+      const eased = 0.5 - Math.cos(t * Math.PI) / 2;
+      setPulseSize(min + (max - min) * eased);
+      frame = requestAnimationFrame(animate);
+    }
+
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
   }, [selectedPointId]);
 
   const handlePointClick = useCallback(
@@ -78,14 +95,14 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
     [onPointClick]
   );
 
-  // Neon green by default, neon pink + pulsing when selected
+  // Only the selected marker gets the pulse size — all others stay fixed at 0.8
   const pointsData = data.map((point) => {
     const isSelected = selectedPointId === point.id;
     return {
       ...point,
       lat: point.coordinates.lat,
       lng: point.coordinates.lng,
-      size: isSelected ? (pulse ? 1.8 : 1.2) : 0.8,
+      size: isSelected ? pulseSize : 0.8,
       color: isSelected ? '#ff2d78' : '#39ff14',
     };
   });
@@ -265,3 +282,4 @@ function getCountryName(code: string): string {
   };
   return names[code.toUpperCase()] ?? code;
 }
+
