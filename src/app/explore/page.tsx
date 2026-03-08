@@ -93,7 +93,6 @@ export default function ExplorePage() {
     if (point) {
       setSelectedPoint(point);
       setIsSidebarOpen(true);
-      // Fly the globe camera to this marker
       globeRef.current?.flyTo(
         point.coordinates.lat,
         point.coordinates.lng
@@ -121,11 +120,11 @@ export default function ExplorePage() {
     specialties.find((s) => s.value === value)?.label || value;
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col">
-      <div className="flex-1 flex flex-col lg:flex-row">
+    <div className="h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
 
         {/* Globe Section */}
-        <div className="flex-1 relative min-h-[400px] lg:min-h-0">
+        <div className="flex-1 relative min-h-0">
           <Globe
             ref={globeRef}
             data={mapData}
