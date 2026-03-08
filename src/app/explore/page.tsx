@@ -120,7 +120,7 @@ export default function ExplorePage() {
     specialties.find((s) => s.value === value)?.label || value;
 
   return (
-    <div className="h-screen bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden">
+    <div className="bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 80px)', marginTop: '80px' }}>
       <div className="flex-1 flex flex-col lg:flex-row min-h-0">
 
         {/* Globe Section */}
