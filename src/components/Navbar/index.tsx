@@ -2,29 +2,28 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function Navbar() {
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     const controlNavbar = () => {
-      if (typeof window !== "undefined") {
-        if (window.scrollY > lastScrollY && window.scrollY > 100) {
-          setIsVisible(false);
-        } else {
-          setIsVisible(true);
-        }
-        setLastScrollY(window.scrollY);
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY.current && currentScrollY > 100) {
+        setIsVisible(false);
+      } else {
+        setIsVisible(true);
       }
+      lastScrollY.current = currentScrollY;
     };
 
-    window.addEventListener("scroll", controlNavbar);
+    window.addEventListener("scroll", controlNavbar, { passive: true });
     return () => {
       window.removeEventListener("scroll", controlNavbar);
     };
-  }, [lastScrollY]);
+  }, []);
 
   {/* TODO: figure out better design for navbar content -- specifically how to display share/explore pages */ }
   return (
@@ -39,9 +38,10 @@ export default function Navbar() {
               <Image
                 src="/mit-logo.png"
                 alt="MIT Logo"
-                width={48}
-                height={24}
+                width={168}
+                height={104}
                 className="object-contain brightness-0 invert"
+                style={{ width: "48px", height: "auto" }}
               />
               <div className="flex flex-col leading-none">
                 <span className="text-xs font-semibold text-white tracking-widest uppercase">Critical</span>

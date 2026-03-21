@@ -205,7 +205,7 @@ export default function ExplorePage() {
             ) : activeTab === 'highlights' ? (
               <HighlightsFeed
                 highlights={highlights}
-                selectedId={selectedPoint?.id}
+                selectedId={undefined}
                 onHighlightClick={handleHighlightClick}
                 isLoading={isLoading}
               />
@@ -225,7 +225,9 @@ export default function ExplorePage() {
 
       {/* Sidebar Backdrop (Mobile) */}
       {isSidebarOpen && (
-        <div
+        <button
+          type="button"
+          aria-label="Close sidebar"
           className="fixed inset-0 bg-black/60 z-30 lg:hidden backdrop-blur-sm"
           onClick={() => setIsSidebarOpen(false)}
         />
