@@ -1,9 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { TiMicrophoneOutline } from "react-icons/ti";
 import { FaLightbulb, FaDatabase } from "react-icons/fa";
 import { HiOutlineDocumentText, HiOutlineGlobe, HiOutlineChatAlt2, HiOutlineUserGroup } from "react-icons/hi";
 import { Ubuntu } from 'next/font/google';
 import BackgroundGlobe from '@/components/BackgroundGlobe';
+
+export const metadata: Metadata = {
+  title: "Voices of AI in Medicine | MIT Critical Data",
+  description: "A global, community-owned digital ethnography documenting how healthcare learners and early-career professionals experience artificial intelligence in real time.",
+};
 
 const ubuntu = Ubuntu({
   subsets: ['latin'],
@@ -168,8 +174,8 @@ export default function Home() {
                     { icon: <HiOutlineUserGroup className="w-5 h-5" />, title: "Group Sessions", desc: "Classmates, friends, and family together" },
                     { icon: <HiOutlineChatAlt2 className="w-5 h-5" />, title: "Personal Stories", desc: "Lived experience, not academic theory" },
                     { icon: <FaDatabase className="w-5 h-5" />, title: "AI Analysis", desc: "Thematic analysis, human-interpreted" },
-                  ].map((item, i) => (
-                    <div key={i} className="p-5 rounded-xl border border-white/10 bg-white/[0.03] hover:border-[#38BDF8]/40 transition-all">
+                  ].map((item) => (
+                    <div key={item.title} className="p-5 rounded-xl border border-white/10 bg-white/[0.03] hover:border-[#38BDF8]/40 transition-all">
                       <div className="text-[#38BDF8] mb-3">{item.icon}</div>
                       <h4 className="text-sm font-semibold text-white mb-1">{item.title}</h4>
                       <p className="text-xs text-white/45 leading-relaxed">{item.desc}</p>
@@ -191,7 +197,7 @@ export default function Home() {
                     { q: "What is not being discussed?", d: "Silences, self-censorship, fear of institutional reprisal, and 'algorithmic superstition'" },
                     { q: "Echo chambers vs. diverse perspectives?", d: "Comparing insular narratives with those that emerge through cross-cultural dialogue" },
                   ].map((item, i) => (
-                    <div key={i} className="p-8 bg-black/60 hover:bg-white/[0.04] transition-colors">
+                    <div key={item.q} className="p-8 bg-black/60 hover:bg-white/[0.04] transition-colors">
                       <div className="text-xs font-mono text-[#38BDF8] mb-3">Q{String(i + 1).padStart(2, '0')}</div>
                       <h4 className="text-base font-semibold text-white mb-2 leading-snug">{item.q}</h4>
                       <p className="text-sm text-white/45 leading-relaxed">{item.d}</p>
@@ -245,7 +251,7 @@ export default function Home() {
                       "Public Health Researchers",
                       "Humanists & Artists",
                     ].map((label, i) => (
-                      <div key={i} className="flex items-center gap-4 py-4 border-b border-white/10 group">
+                      <div key={label} className="flex items-center gap-4 py-4 border-b border-white/10 group">
                         <span className="text-xs font-mono text-[#38BDF8] w-5">{String(i + 1).padStart(2, '0')}</span>
                         <span className="text-white/70 group-hover:text-white transition-colors font-medium">{label}</span>
                       </div>
@@ -271,7 +277,7 @@ export default function Home() {
                   { label: "For Educators", body: "Identify gaps between formal AI policies and lived practice to inform curriculum reform" },
                   { label: "For Policymakers", body: "Equity-oriented governance insights showing how attitudes vary by role, region, and institutional power" },
                 ].map((item, i) => (
-                  <div key={i} className="p-8 bg-black/60 hover:bg-white/[0.04] transition-colors">
+                  <div key={item.label} className="p-8 bg-black/60 hover:bg-white/[0.04] transition-colors">
                     <div className="text-xs font-mono text-[#38BDF8] mb-4">{String(i + 1).padStart(2, '0')}</div>
                     <h3 className="text-lg font-semibold text-white mb-3">{item.label}</h3>
                     <p className="text-sm text-white/45 leading-relaxed">{item.body}</p>
@@ -315,7 +321,7 @@ export default function Home() {
               <div className="flex gap-8">
                 <Link href="/explore" className="hover:text-white transition-colors">Explore</Link>
                 <Link href="/share" className="hover:text-white transition-colors">Share</Link>
-                <Link href="#" className="hover:text-white transition-colors">Accessibility</Link>
+
               </div>
             </div>
           </footer>

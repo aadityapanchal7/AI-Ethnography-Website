@@ -63,7 +63,7 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
   // Control auto-rotate via Three.js OrbitControls on the globe ref
   useEffect(() => {
     if (!globeRef.current) return;
-    const controls = globeRef.current.controls?.() as Record<string, unknown> | undefined;
+    const controls = (globeRef.current.controls as (() => Record<string, unknown>) | undefined)?.();
     if (!controls) return;
     controls.autoRotate = isAutoRotating;
     controls.autoRotateSpeed = 0.5;
@@ -74,7 +74,7 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
     if (!GlobeGL) return;
     const timer = setTimeout(() => {
       if (!globeRef.current) return;
-      const controls = globeRef.current.controls?.() as Record<string, unknown> | undefined;
+      const controls = (globeRef.current.controls as (() => Record<string, unknown>) | undefined)?.();
       if (!controls) return;
       controls.autoRotate = true;
       controls.autoRotateSpeed = 0.5;
@@ -112,7 +112,7 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
         ? elapsed / duration
         : 1 - (elapsed - duration) / duration;
       const eased = 0.5 - Math.cos(t * Math.PI) / 2;
-      setPulseSize(min + (max - min) * eased);
+      setPulseSize(() => min + (max - min) * eased);
       frame = requestAnimationFrame(animate);
     }
 
