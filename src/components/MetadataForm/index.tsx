@@ -27,6 +27,8 @@ const practiceSettings: { value: PracticeSetting; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
+type GeoStatus = 'idle' | 'pending' | 'granted' | 'denied' | 'unsupported';
+
 export default function MetadataForm({ initialData, onSubmit, onBack }: MetadataFormProps) {
   const [formData, setFormData] = useState<Partial<Metadata>>({
     country: initialData?.country || '',
@@ -34,12 +36,19 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
     specialty: initialData?.specialty || '',
     language: initialData?.language || '',
     practiceSetting: initialData?.practiceSetting || undefined,
+    coordinates: initialData?.coordinates,
+    locationSource: initialData?.locationSource,
+    isGroupSubmission: initialData?.isGroupSubmission ?? false,
+    contributorIdentities: initialData?.contributorIdentities || '',
   });
 
   const [searchCountry, setSearchCountry] = useState('');
   const [searchLanguage, setSearchLanguage] = useState('');
   const [searchSpecialty, setSearchSpecialty] = useState('');
   const [errors, setErrors] = useState<Partial<Record<keyof Metadata, string>>>({});
+  const [geoStatus, setGeoStatus] = useState<GeoStatus>(
+    initialData?.coordinates ? 'granted' : 'idle'
+  );
 
   // Filter countries based on search
   const filteredCountries = useMemo(() => {
@@ -74,30 +83,75 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
     const newErrors: Partial<Record<keyof Metadata, string>> = {};
 
     if (!formData.country) {
-      newErrors.country = 'Please select your country';
+      newErrors.country = 'Select the country or region your group is primarily based in';
+    }
+    if (!formData.isGroupSubmission) {
+      newErrors.isGroupSubmission =
+        'This archive collects group dialogues — please confirm your recording is from a group.';
+    }
+    if (!formData.contributorIdentities?.trim()) {
+      newErrors.contributorIdentities =
+        'Describe who is speaking (approximate ages and how each person identifies).';
     }
     if (!formData.careerStage) {
-      newErrors.careerStage = 'Please select your career stage';
-    }
-    if (!formData.specialty) {
-      newErrors.specialty = 'Please select your specialty';
+      newErrors.careerStage = 'Pick the closest representative career stage for the group';
     }
     if (!formData.language) {
-      newErrors.language = 'Please select your preferred language';
+      newErrors.language = 'Select the primary language spoken in the recording';
     }
     if (!formData.practiceSetting) {
-      newErrors.practiceSetting = 'Please select your practice setting';
+      newErrors.practiceSetting = 'Select the setting that best fits your group’s context';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  const requestBrowserLocation = () => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setGeoStatus('unsupported');
+      return;
+    }
+    setGeoStatus('pending');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setFormData((prev) => ({
+          ...prev,
+          coordinates: { lat: pos.coords.latitude, lng: pos.coords.longitude },
+          locationSource: 'browser',
+        }));
+        setGeoStatus('granted');
+      },
+      () => setGeoStatus('denied'),
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 600_000 }
+    );
+  };
+
+  const clearBrowserLocation = () => {
+    setFormData((prev) => {
+      const next = { ...prev };
+      delete next.coordinates;
+      delete next.locationSource;
+      return next;
+    });
+    setGeoStatus('idle');
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      onSubmit(formData as Metadata);
-    }
+    if (!validateForm()) return;
+    const spec = formData.specialty?.trim();
+    onSubmit({
+      country: formData.country!,
+      careerStage: formData.careerStage!,
+      language: formData.language!,
+      practiceSetting: formData.practiceSetting!,
+      isGroupSubmission: true,
+      contributorIdentities: formData.contributorIdentities!.trim(),
+      specialty: spec || undefined,
+      coordinates: formData.coordinates,
+      locationSource: formData.locationSource,
+    });
   };
 
   const selectedCountry = countries.find(c => c.code === formData.country);
@@ -107,14 +161,16 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-white mb-2">Tell Us About Yourself</h2>
-        <p className="text-slate-400">This information helps us understand your perspective</p>
+        <h2 className="text-2xl font-bold text-white mb-2">About your group</h2>
+        <p className="text-slate-400">
+          Geolocation, who is speaking, language, and career context — we do not accept solo individual submissions for this study.
+        </p>
       </div>
 
       {/* Country Selection */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-white">
-          Country <span className="text-red-500">*</span>
+          Country or region of the group <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <input
@@ -158,10 +214,54 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
         {errors.country && <p className="text-red-500 text-sm">{errors.country}</p>}
       </div>
 
+      {/* Group affirmation */}
+      <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+        <label className="flex cursor-pointer items-start gap-3 text-left">
+          <input
+            type="checkbox"
+            checked={Boolean(formData.isGroupSubmission)}
+            onChange={(e) => {
+              setFormData((prev) => ({ ...prev, isGroupSubmission: e.target.checked }));
+              setErrors((prev) => ({ ...prev, isGroupSubmission: undefined }));
+            }}
+            className="mt-1 h-4 w-4 rounded border-white/20 bg-black/40 text-[#3B82F6] focus:ring-[#3B82F6]/50"
+          />
+          <span className="text-sm text-white/90 leading-relaxed">
+            <span className="font-medium text-white">This is a group submission.</span> The recording captures a dialogue with{' '}
+            <span className="text-white">more than one person</span> contributing (not a solo individual voice note).
+          </span>
+        </label>
+        {errors.isGroupSubmission && (
+          <p className="text-red-500 text-sm">{errors.isGroupSubmission}</p>
+        )}
+
+        <div className="space-y-2 pt-1">
+          <label className="block text-sm font-medium text-white">
+            Who is speaking? <span className="text-red-500">*</span>
+          </label>
+          <p className="text-xs text-slate-500">
+            For each person heard in the recording, share approximate age or age range and how they identify, as your group is comfortable sharing.
+          </p>
+          <textarea
+            value={formData.contributorIdentities ?? ''}
+            onChange={(e) => {
+              setFormData((prev) => ({ ...prev, contributorIdentities: e.target.value }));
+              setErrors((prev) => ({ ...prev, contributorIdentities: undefined }));
+            }}
+            rows={4}
+            placeholder="e.g. Person A — early 30s, community health worker; Person B — 50s, nurse; …"
+            className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder-slate-500 focus:border-[#3B82F6] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]/40"
+          />
+          {errors.contributorIdentities && (
+            <p className="text-red-500 text-sm">{errors.contributorIdentities}</p>
+          )}
+        </div>
+      </div>
+
       {/* Career Stage */}
       <div className="space-y-3">
         <label className="block text-sm font-medium text-white">
-          Career Stage <span className="text-red-500">*</span>
+          Representative career stage for the group <span className="text-red-500">*</span>
         </label>
         <div className="grid grid-cols-2 gap-3">
           {careerStages.map((stage) => (
@@ -229,14 +329,14 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
             </button>
           </div>
         )}
-        {errors.specialty && <p className="text-red-500 text-sm">{errors.specialty}</p>}
       </div>
 
       {/* Language */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-white">
-          Preferred Language for Recording <span className="text-red-500">*</span>
+          Primary language in the recording <span className="text-red-500">*</span>
         </label>
+        <p className="text-xs text-slate-500">The platform will support translation over time; this helps transcription and display.</p>
         <div className="relative">
           <input
             type="text"
@@ -303,6 +403,47 @@ export default function MetadataForm({ initialData, onSubmit, onBack }: Metadata
           ))}
         </div>
         {errors.practiceSetting && <p className="text-red-500 text-sm">{errors.practiceSetting}</p>}
+      </div>
+
+      {/* Map location (optional, browser geolocation with consent) */}
+      <div className="space-y-3 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+        <label className="block text-sm font-medium text-white">
+          Geolocation for the map <span className="font-normal text-white/40">(optional)</span>
+        </label>
+        <p className="text-xs text-white/50 leading-relaxed">
+          Optional approximate browser location so your group’s story can appear as a pin on the global map. Country/region above is still stored either way.
+        </p>
+        {geoStatus === 'unsupported' && (
+          <p className="text-xs text-amber-200/80">This browser does not support location.</p>
+        )}
+        {geoStatus === 'denied' && (
+          <p className="text-xs text-amber-200/80">Location was not shared. You can try again or continue without it.</p>
+        )}
+        {formData.coordinates && (
+          <p className="font-mono text-xs text-[#38BDF8]">
+            {formData.coordinates.lat.toFixed(4)}, {formData.coordinates.lng.toFixed(4)}{' '}
+            <span className="text-white/35">(from browser, approximate)</span>
+          </p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={requestBrowserLocation}
+            disabled={geoStatus === 'pending'}
+            className="rounded-lg border border-[#38BDF8]/40 bg-[#38BDF8]/10 px-4 py-2 text-sm font-medium text-[#7DD3FC] transition-colors hover:bg-[#38BDF8]/20 disabled:opacity-50"
+          >
+            {geoStatus === 'pending' ? 'Requesting…' : 'Use my location'}
+          </button>
+          {formData.coordinates && (
+            <button
+              type="button"
+              onClick={clearBrowserLocation}
+              className="rounded-lg border border-white/15 px-4 py-2 text-sm text-white/60 hover:bg-white/5"
+            >
+              Remove location
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Navigation Buttons */}

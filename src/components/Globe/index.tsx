@@ -11,6 +11,9 @@ interface GlobeProps {
 
 export interface GlobeHandle {
   flyTo: (lat: number, lng: number) => void;
+  zoomIn: () => void;
+  zoomOut: () => void;
+  resetView: () => void;
 }
 
 const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
@@ -22,18 +25,59 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
   const [GlobeGL, setGlobeGL] = useState<React.ComponentType<Record<string, unknown>> | null>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [isLoading, setIsLoading] = useState(true);
-  const [pulseSize, setPulseSize] = useState(1.2);
+  const [pulseSize, setPulseSize] = useState(1.15);
   const [isAutoRotating, setIsAutoRotating] = useState(true);
+  const [showLabels, setShowLabels] = useState(true);
   const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Expose flyTo to parent via ref
-  useImperativeHandle(ref, () => ({
-    flyTo(lat: number, lng: number) {
-      if (globeRef.current && typeof globeRef.current.pointOfView === 'function') {
-        globeRef.current.pointOfView({ lat, lng, altitude: 1.5 }, 1000);
-      }
-    },
-  }));
+  const ACCENT = '#38BDF8';
+  const SELECTED = '#ffffff';
+
+  const flyToInternal = useCallback((lat: number, lng: number) => {
+    const g = globeRef.current;
+    if (g && typeof g.pointOfView === 'function') {
+      g.pointOfView({ lat, lng, altitude: 0.55 }, 1100);
+    }
+  }, []);
+
+  const zoomInInternal = useCallback(() => {
+    const g = globeRef.current;
+    if (!g || typeof g.pointOfView !== 'function') return;
+    const pov = g.pointOfView() as { lat?: number; lng?: number; altitude?: number };
+    const alt = typeof pov.altitude === 'number' ? pov.altitude : 2;
+    g.pointOfView(
+      { lat: pov.lat ?? 0, lng: pov.lng ?? 0, altitude: Math.max(0.12, alt * 0.72) },
+      420
+    );
+  }, []);
+
+  const zoomOutInternal = useCallback(() => {
+    const g = globeRef.current;
+    if (!g || typeof g.pointOfView !== 'function') return;
+    const pov = g.pointOfView() as { lat?: number; lng?: number; altitude?: number };
+    const alt = typeof pov.altitude === 'number' ? pov.altitude : 2;
+    g.pointOfView(
+      { lat: pov.lat ?? 0, lng: pov.lng ?? 0, altitude: Math.min(5, alt * 1.38) },
+      420
+    );
+  }, []);
+
+  const resetViewInternal = useCallback(() => {
+    const g = globeRef.current;
+    if (!g || typeof g.pointOfView !== 'function') return;
+    g.pointOfView({ lat: 12, lng: 18, altitude: 2.15 }, 1000);
+  }, []);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      flyTo: flyToInternal,
+      zoomIn: zoomInInternal,
+      zoomOut: zoomOutInternal,
+      resetView: resetViewInternal,
+    }),
+    [flyToInternal, zoomInInternal, zoomOutInternal, resetViewInternal]
+  );
 
   // Dynamically import react-globe.gl
   useEffect(() => {
@@ -63,7 +107,8 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
   // Control auto-rotate via Three.js OrbitControls on the globe ref
   useEffect(() => {
     if (!globeRef.current) return;
-    const controls = globeRef.current.controls?.() as Record<string, unknown> | undefined;
+    const g = globeRef.current as { controls?: () => { autoRotate?: boolean; autoRotateSpeed?: number } };
+    const controls = g.controls?.();
     if (!controls) return;
     controls.autoRotate = isAutoRotating;
     controls.autoRotateSpeed = 0.5;
@@ -74,7 +119,8 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
     if (!GlobeGL) return;
     const timer = setTimeout(() => {
       if (!globeRef.current) return;
-      const controls = globeRef.current.controls?.() as Record<string, unknown> | undefined;
+      const g = globeRef.current as { controls?: () => { autoRotate?: boolean; autoRotateSpeed?: number } };
+      const controls = g.controls?.();
       if (!controls) return;
       controls.autoRotate = true;
       controls.autoRotateSpeed = 0.5;
@@ -95,15 +141,15 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
   // Smooth sine-wave pulse — only for selected marker
   useEffect(() => {
     if (!selectedPointId) {
-      setPulseSize(1.2);
+      setPulseSize(1.15);
       return;
     }
 
     let frame: number;
     let start: number | null = null;
     const duration = 900;
-    const min = 1.1;
-    const max = 1.8;
+    const min = 1.05;
+    const max = 1.75;
 
     function animate(timestamp: number) {
       if (!start) start = timestamp;
@@ -144,16 +190,18 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
       ...point,
       lat: point.coordinates.lat,
       lng: point.coordinates.lng,
-      size: isSelected ? pulseSize : 0.8,
-      color: isSelected ? '#ff2d78' : '#39ff14',
+      size: isSelected ? pulseSize : 0.78,
+      color: isSelected ? SELECTED : ACCENT,
     };
   });
 
-  const htmlData = data.map((point) => ({
-    ...point,
-    lat: point.coordinates.lat,
-    lng: point.coordinates.lng,
-  }));
+  const htmlData = showLabels
+    ? data.map((point) => ({
+        ...point,
+        lat: point.coordinates.lat,
+        lng: point.coordinates.lng,
+      }))
+    : [];
 
   if (isLoading) {
     return (
@@ -190,14 +238,17 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
               onClick={() => onPointClick(point)}
               className={`p-3 rounded-xl text-left transition-all ${
                 selectedPointId === point.id
-                  ? 'bg-pink-500/20 border-2 border-pink-500'
-                  : 'bg-slate-800/50 border border-slate-700 hover:border-slate-600'
+                  ? 'border-2 border-[#38BDF8] bg-[#38BDF8]/15'
+                  : 'border border-white/15 bg-white/[0.04] hover:border-white/25'
               }`}
             >
               <div className="flex items-center gap-2 mb-1">
                 <span
                   className="w-3 h-3 rounded-full"
-                  style={{ backgroundColor: selectedPointId === point.id ? '#ff2d78' : '#39ff14' }}
+                  style={{
+                    backgroundColor: selectedPointId === point.id ? '#ffffff' : '#38BDF8',
+                    boxShadow: selectedPointId === point.id ? '0 0 8px #fff' : '0 0 8px #38BDF8',
+                  }}
                 />
                 <span className="text-white text-sm font-medium">
                   {getCountryName(point.country)}
@@ -225,7 +276,7 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
         pointsData={pointsData}
         pointLat="lat"
         pointLng="lng"
-        pointAltitude={0.02}
+        pointAltitude={0.018}
         pointRadius="size"
         pointColor="color"
 
@@ -237,7 +288,7 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
         htmlElement={(d: object) => {
           const point = d as MapDataPoint;
           const isSelected = selectedPointId === point.id;
-          const color = isSelected ? '#ff2d78' : '#39ff14';
+          const color = isSelected ? SELECTED : ACCENT;
           const el = document.createElement('div');
           el.innerText = getCountryName(point.country);
           el.style.color = color;
@@ -260,15 +311,15 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
         pointLabel={(d: object) => {
           const point = d as MapDataPoint;
           const isSelected = selectedPointId === point.id;
-          const color = isSelected ? '#ff2d78' : '#39ff14';
+          const color = isSelected ? SELECTED : ACCENT;
           return `
-            <div style="background: rgba(15, 23, 42, 0.95); padding: 12px; border-radius: 12px; border: 1px solid rgba(51, 65, 85, 0.5); max-width: 250px;">
+            <div style="background: rgba(0, 0, 0, 0.88); padding: 12px; border-radius: 12px; border: 1px solid rgba(56, 189, 248, 0.35); max-width: 280px; backdrop-filter: blur(8px);">
               <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                <span style="width: 8px; height: 8px; border-radius: 50%; background: ${color};"></span>
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: ${color}; box-shadow: 0 0 8px ${color};"></span>
                 <span style="color: white; font-weight: 600;">${getCountryName(point.country)}</span>
-                <span style="color: #94a3b8; font-size: 12px;">${point.careerStage}</span>
+                <span style="color: rgba(255,255,255,0.45); font-size: 12px;">${point.careerStage}</span>
               </div>
-              <p style="color: #cbd5e1; font-size: 13px; line-height: 1.4;">"${point.highlight}"</p>
+              <p style="color: rgba(255,255,255,0.78); font-size: 13px; line-height: 1.45;">"${point.highlight}"</p>
             </div>
           `;
         }}
@@ -277,37 +328,72 @@ const Globe = forwardRef<GlobeHandle, GlobeProps>(function Globe(
         onGlobeClick={handleGlobeClick}
         enablePointerInteraction={true}
         animateIn={true}
-        atmosphereColor="#3b82f6"
-        atmosphereAltitude={0.25}
+        atmosphereColor={ACCENT}
+        atmosphereAltitude={0.22}
       />
 
+      {/* Controls */}
+      <div className="absolute top-4 right-4 flex flex-col gap-2">
+        <div className="flex overflow-hidden rounded-lg border border-white/15 bg-black/70 backdrop-blur-md">
+          <button
+            type="button"
+            onClick={zoomOutInternal}
+            className="px-3 py-2 text-sm text-white/80 hover:bg-white/10"
+            aria-label="Zoom out"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            onClick={zoomInInternal}
+            className="border-l border-white/10 px-3 py-2 text-sm text-white/80 hover:bg-white/10"
+            aria-label="Zoom in"
+          >
+            +
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={resetViewInternal}
+          className="rounded-lg border border-white/15 bg-black/70 px-3 py-2 text-[11px] font-medium uppercase tracking-wide text-white/75 backdrop-blur-md hover:bg-white/10"
+        >
+          Reset
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowLabels((value) => !value)}
+          className="rounded-lg border border-white/15 bg-black/70 px-3 py-2 text-[11px] font-medium text-white/75 backdrop-blur-md hover:bg-white/10"
+        >
+          {showLabels ? 'Hide labels' : 'Show labels'}
+        </button>
+      </div>
+
       {/* Auto-rotate indicator */}
-      <div className="absolute top-4 left-4 flex items-center gap-2 bg-slate-900/80 backdrop-blur px-3 py-1.5 rounded-full border border-slate-700/50">
+      <div className="absolute top-4 left-4 flex items-center gap-2 rounded-full border border-white/15 bg-black/70 px-3 py-1.5 backdrop-blur-md">
         <span
-          className="w-2 h-2 rounded-full"
+          className="h-2 w-2 rounded-full"
           style={{
             backgroundColor: isAutoRotating ? '#4ade80' : '#64748b',
             boxShadow: isAutoRotating ? '0 0 6px #4ade80' : 'none',
           }}
         />
-        <span className="text-slate-400 text-xs">
-          {isAutoRotating ? 'Auto-rotating' : 'Paused'}
-        </span>
+        <span className="text-xs text-white/55">{isAutoRotating ? 'Auto-rotating' : 'Paused'}</span>
       </div>
 
       {/* Legend */}
-      <div className="absolute bottom-4 left-4 bg-slate-900/90 backdrop-blur rounded-xl p-3 border border-slate-700/50">
-        <h4 className="text-xs text-slate-400 uppercase tracking-wide mb-2">Markers</h4>
+      <div className="absolute bottom-4 left-4 rounded-xl border border-white/15 bg-black/75 p-3 backdrop-blur-md">
+        <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-white/40">Markers</h4>
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#39ff14', boxShadow: '0 0 6px #39ff14' }} />
-            <span className="text-slate-300 text-xs">Story marker</span>
+            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: ACCENT, boxShadow: `0 0 8px ${ACCENT}` }} />
+            <span className="text-xs text-white/65">Voice submission</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ff2d78', boxShadow: '0 0 6px #ff2d78' }} />
-            <span className="text-slate-300 text-xs">Selected story</span>
+            <span className="h-3 w-3 rounded-full bg-white" style={{ boxShadow: '0 0 8px #fff' }} />
+            <span className="text-xs text-white/65">Selected</span>
           </div>
         </div>
+        <p className="mt-2 text-[10px] text-white/35">{data.length} on map</p>
       </div>
     </div>
   );

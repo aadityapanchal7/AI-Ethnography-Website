@@ -37,9 +37,8 @@ export default function ConsentModal({ onConsent, onClose }: ConsentModalProps) 
           <div className="bg-white/5 rounded-xl p-4 border border-white/10">
             <h3 className="font-semibold text-white mb-2">About This Research</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Your submission will contribute to understanding how healthcare professionals
-              experience AI in their practice. This research aims to capture diverse perspectives
-              from medical professionals worldwide.
+              Your submission will contribute to understanding how groups experience AI in health and care.
+              Contributions are <span className="text-slate-300">audio or video recordings only</span> (no typed uploads), typically 3–5 minutes, to preserve tone and reduce synthetic text submissions.
             </p>
           </div>
 

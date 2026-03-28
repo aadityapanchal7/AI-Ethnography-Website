@@ -66,7 +66,9 @@ export default function ReviewSubmit({
   // Get display names
   const countryName = countries.find(c => c.code === metadata.country)?.name || metadata.country;
   const languageName = languages.find(l => l.code === metadata.language)?.name || metadata.language;
-  const specialtyName = specialties.find(s => s.value === metadata.specialty)?.label || metadata.specialty;
+  const specialtyName = metadata.specialty?.trim()
+    ? specialties.find(s => s.value === metadata.specialty)?.label || metadata.specialty
+    : '';
 
   if (submitSuccess) {
     return (
@@ -135,25 +137,46 @@ export default function ReviewSubmit({
         <div className="p-4">
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <dt className="text-xs text-slate-500 uppercase tracking-wide">Country</dt>
+              <dt className="text-xs text-slate-500 uppercase tracking-wide">Group submission</dt>
+              <dd className="text-white mt-1">{metadata.isGroupSubmission ? 'Yes' : 'No'}</dd>
+            </div>
+            <div className="sm:col-span-2">
+              <dt className="text-xs text-slate-500 uppercase tracking-wide">Who is speaking</dt>
+              <dd className="text-white mt-1 whitespace-pre-wrap">{metadata.contributorIdentities || '—'}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-slate-500 uppercase tracking-wide">Country / region</dt>
               <dd className="text-white mt-1">{countryName}</dd>
             </div>
             <div>
-              <dt className="text-xs text-slate-500 uppercase tracking-wide">Career Stage</dt>
+              <dt className="text-xs text-slate-500 uppercase tracking-wide">Career stage (representative)</dt>
               <dd className="text-white mt-1">{careerStageLabels[metadata.careerStage]}</dd>
             </div>
-            <div>
-              <dt className="text-xs text-slate-500 uppercase tracking-wide">Specialty</dt>
-              <dd className="text-white mt-1">{specialtyName}</dd>
-            </div>
+            {specialtyName ? (
+              <div>
+                <dt className="text-xs text-slate-500 uppercase tracking-wide">Focus (optional)</dt>
+                <dd className="text-white mt-1">{specialtyName}</dd>
+              </div>
+            ) : null}
             <div>
               <dt className="text-xs text-slate-500 uppercase tracking-wide">Language</dt>
               <dd className="text-white mt-1">{languageName}</dd>
             </div>
             <div className="sm:col-span-2">
-              <dt className="text-xs text-slate-500 uppercase tracking-wide">Practice Setting</dt>
+              <dt className="text-xs text-slate-500 uppercase tracking-wide">Community / care context</dt>
               <dd className="text-white mt-1">{practiceSettingLabels[metadata.practiceSetting]}</dd>
             </div>
+            {metadata.coordinates && (
+              <div className="sm:col-span-2">
+                <dt className="text-xs text-slate-500 uppercase tracking-wide">Map location (optional)</dt>
+                <dd className="mt-1 font-mono text-sm text-white">
+                  {metadata.coordinates.lat.toFixed(4)}, {metadata.coordinates.lng.toFixed(4)}
+                  <span className="ml-2 text-xs font-sans text-slate-500">
+                    approximate browser location
+                  </span>
+                </dd>
+              </div>
+            )}
           </dl>
         </div>
       </div>
@@ -165,13 +188,13 @@ export default function ReviewSubmit({
             <svg className="w-5 h-5 text-[#3B82F6]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
             </svg>
-            Your Recording
+            Your audio
           </h3>
           <button
             onClick={onEditRecording}
             className="text-sm text-[#3B82F6] hover:text-[#2563EB] transition-colors"
           >
-            Re-record
+            Change
           </button>
         </div>
         <div className="p-4">
@@ -182,7 +205,7 @@ export default function ReviewSubmit({
               </svg>
             </div>
             <div>
-              <div className="text-white font-medium">Audio Recording</div>
+              <div className="text-white font-medium">Audio file</div>
               <div className="text-sm text-slate-500">
                 {(audioBlob.size / 1024 / 1024).toFixed(2)} MB
               </div>

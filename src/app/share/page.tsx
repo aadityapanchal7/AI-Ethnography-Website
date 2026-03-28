@@ -7,6 +7,7 @@ import ConsentModal from '@/components/ConsentModal';
 import MetadataForm from '@/components/MetadataForm';
 import AudioRecorder from '@/components/AudioRecorder';
 import ReviewSubmit from '@/components/ReviewSubmit';
+import StoryPromptGuide from '@/components/StoryPromptGuide';
 import BackgroundGlobe from '@/components/BackgroundGlobe';
 import type { Metadata, ShareFlowStep } from '@/lib/types';
 import { submitTestimonial } from '@/lib/api';
@@ -14,7 +15,7 @@ import { submitTestimonial } from '@/lib/api';
 const steps: { id: ShareFlowStep; label: string }[] = [
   { id: 'consent', label: 'Consent' },
   { id: 'metadata', label: 'About You' },
-  { id: 'record', label: 'Record' },
+  { id: 'record', label: 'Audio' },
   { id: 'review', label: 'Review' },
 ];
 
@@ -90,9 +91,14 @@ export default function SharePage() {
               Share Your Story<span className="text-[#38BDF8]">.</span>
             </h1>
             <p className="mt-3 text-white/50 text-sm leading-relaxed max-w-lg">
-              A 5-minute audio or video recording in your own words — your experience with AI in medicine, education, or daily life.
+              <span className="text-white/70">Group voice or video recordings only</span> (no text uploads) —
+              your shared experience with AI in health, medicine, and community wellbeing. Target roughly 3–5 minutes; hard cap 5 minutes.
             </p>
           </div>
+        </div>
+
+        <div className="max-w-3xl mx-auto px-6 pb-6">
+          <StoryPromptGuide />
         </div>
 
         {/* ── STEPPER ───────────────────────────────── */}
