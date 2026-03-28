@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const path = require('path');
 
-const withPWA = require("next-pwa")({
+const withPWA = require("@ducanh2912/next-pwa").default({
   dest: "public",
   register: true,
   skipWaiting: true,
@@ -23,7 +23,5 @@ const nextConfig: NextConfig = {
   // Transpile packages that need it
   transpilePackages: ["three", "react-globe.gl"],
 };
-
-module.exports = nextConfig;
 
 export default withPWA(nextConfig);
