@@ -2,10 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import dynamic from 'next/dynamic';
+import BackgroundGlobe from '@/components/BackgroundGlobe';
 import HighlightsFeed from '@/components/HighlightsFeed';
 import ThemesPanel from '@/components/ThemesPanel';
-import type { Testimonial, Theme, MapDataPoint } from '@/lib/types';
-import { getHighlights, getMapData, getThemes } from '@/lib/api';
+import DiscussionForum from '@/components/DiscussionForum';
+import type { Testimonial, Theme, MapDataPoint, DiscussionPost, DiscussionPostSort } from '@/lib/types';
+import type { ViewOnMapPayload } from '@/components/DiscussionForum';
+import { getDiscussionPosts, getHighlights, getMapData, getThemes } from '@/lib/api';
 import { countries, languages, specialties } from '@/lib/mockData';
 import type { GlobeHandle } from '@/components/Globe';
 
@@ -27,30 +30,39 @@ const Globe = dynamic(() => import('@/components/Globe'), {
 });
 
 type TabType = 'highlights' | 'themes';
+type ExploreView = 'map' | 'discussion';
 
 export default function ExplorePage() {
   const globeRef = useRef<GlobeHandle>(null);
   const [mapData, setMapData] = useState<MapDataPoint[]>([]);
   const [highlights, setHighlights] = useState<Testimonial[]>([]);
   const [themes, setThemes] = useState<Theme[]>([]);
+  const [discussionPosts, setDiscussionPosts] = useState<DiscussionPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPoint, setSelectedPoint] = useState<MapDataPoint | null>(null);
   const [selectedThemeId, setSelectedThemeId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('highlights');
+  const [activeView, setActiveView] = useState<ExploreView>('map');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [focusDiscussionPostId, setFocusDiscussionPostId] = useState<string | null>(null);
+  const [discussionForumKey, setDiscussionForumKey] = useState(0);
+  const [postSort, setPostSort] = useState<DiscussionPostSort>('recent');
 
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
       try {
-        const [mapDataResult, highlightsResult, themesResult] = await Promise.all([
-          getMapData(),
-          getHighlights(),
+        const mapFilters = selectedThemeId ? { themeId: selectedThemeId } : undefined;
+        const [mapDataResult, highlightsResult, themesResult, discussionPostsResult] = await Promise.all([
+          getMapData(mapFilters),
+          getHighlights(mapFilters),
           getThemes(),
+          getDiscussionPosts(postSort),
         ]);
         setMapData(mapDataResult);
         setHighlights(highlightsResult);
         setThemes(themesResult);
+        setDiscussionPosts(discussionPostsResult);
       } catch (error) {
         console.error('Failed to fetch data:', error);
       } finally {
@@ -58,28 +70,7 @@ export default function ExplorePage() {
       }
     }
     fetchData();
-  }, []);
-
-  useEffect(() => {
-    async function filterData() {
-      if (selectedThemeId) {
-        const [filteredMap, filteredHighlights] = await Promise.all([
-          getMapData({ themeId: selectedThemeId }),
-          getHighlights({ themeId: selectedThemeId }),
-        ]);
-        setMapData(filteredMap);
-        setHighlights(filteredHighlights);
-      } else {
-        const [allMap, allHighlights] = await Promise.all([
-          getMapData(),
-          getHighlights(),
-        ]);
-        setMapData(allMap);
-        setHighlights(allHighlights);
-      }
-    }
-    filterData();
-  }, [selectedThemeId]);
+  }, [selectedThemeId, postSort]);
 
   // Clicking a globe marker → show detail + open sidebar
   const handlePointClick = useCallback((point: MapDataPoint) => {
@@ -112,6 +103,35 @@ export default function ExplorePage() {
     setSelectedPoint(null);
   }, []);
 
+  const handleViewPostOnMap = useCallback(
+    (payload: ViewOnMapPayload) => {
+      setActiveView('map');
+      const bySubmission =
+        payload.submissionId != null
+          ? mapData.find((p) => p.id === payload.submissionId)
+          : undefined;
+      const byDiscussion =
+        mapData.find((p) => p.discussionPostId === payload.discussionPostId) ?? bySubmission;
+      if (byDiscussion) {
+        setSelectedPoint(byDiscussion);
+        setIsSidebarOpen(true);
+        globeRef.current?.flyTo(byDiscussion.coordinates.lat, byDiscussion.coordinates.lng);
+        return;
+      }
+      const { lat, lng } = payload.coordinates;
+      globeRef.current?.flyTo(lat, lng);
+      setIsSidebarOpen(false);
+      setSelectedPoint(null);
+    },
+    [mapData]
+  );
+
+  const handleOpenDiscussionFromMap = useCallback((postId: string) => {
+    setActiveView('discussion');
+    setFocusDiscussionPostId(postId);
+    setDiscussionForumKey((key) => key + 1);
+  }, []);
+
   const getCountryName = (code: string) =>
     countries.find((c) => c.code === code)?.name || code;
   const getLanguageName = (code: string) =>
@@ -120,119 +140,181 @@ export default function ExplorePage() {
     specialties.find((s) => s.value === value)?.label || value;
 
   return (
-    <div className="bg-linear-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 80px)', marginTop: '80px' }}>
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+    <>
+      <BackgroundGlobe />
 
-        {/* Globe Section */}
-        <div className="flex-1 relative min-h-0">
-          <Globe
-            ref={globeRef}
-            data={mapData}
-            onPointClick={handlePointClick}
-            selectedPointId={selectedPoint?.id}
-          />
-        </div>
-
-        {/* Sidebar */}
-        <aside
-          className={`w-full lg:w-96 flex flex-col transition-transform duration-300 ${
-            isSidebarOpen ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'
-          } fixed lg:relative bottom-0 left-0 right-0 h-[70vh] lg:h-auto z-40 lg:z-0 rounded-t-2xl lg:rounded-none`}
-          style={{
-            background: 'linear-gradient(180deg, #0f172a 0%, #0c1427 100%)',
-            borderLeft: '1px solid rgba(99, 102, 241, 0.2)',
-            boxShadow: '-8px 0 32px rgba(0, 0, 0, 0.5), inset 1px 0 0 rgba(99, 102, 241, 0.1)',
-          }}
-        >
-          {/* Mobile Handle */}
-          <div className="lg:hidden flex justify-center py-2 border-b border-slate-800/50">
-            <div className="w-12 h-1 rounded-full bg-slate-600" />
-          </div>
-
-          {/* Sidebar Header */}
-          <div
-            className="px-4 py-3 border-b border-slate-800/60"
-            style={{ background: 'rgba(15, 23, 42, 0.8)' }}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-white font-semibold text-sm tracking-wide">
-                {selectedPoint ? 'Story Detail' : 'Explore Stories'}
-              </h2>
-              {!isLoading && !selectedPoint && (
-                <span className="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">
-                  {highlights.length} voices
-                </span>
-              )}
+      <div className="relative z-10 min-h-screen pt-28">
+        <section className="bg-black/60 backdrop-blur-md border-y border-white/10">
+          <div className="max-w-6xl mx-auto px-6 py-10">
+            <p className="text-xs font-semibold tracking-[0.2em] uppercase text-[#38BDF8] mb-3">
+              MIT Critical Data · Explore
+            </p>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-bold text-white leading-tight">
+                  Global Stories and Discussions
+                </h1>
+                <p className="mt-2 text-sm sm:text-base text-white/60 max-w-2xl">
+                  Explore the map or switch to discussion threads in the same space.
+                </p>
+              </div>
+              <div className="inline-flex w-full sm:w-auto rounded-xl border border-white/15 bg-black/40 p-1">
+                <button
+                  onClick={() => setActiveView('map')}
+                  className={`flex-1 sm:flex-none rounded-lg px-4 py-2 text-xs sm:text-sm font-medium ${
+                    activeView === 'map'
+                      ? 'bg-white text-black'
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  Map
+                </button>
+                <button
+                  onClick={() => setActiveView('discussion')}
+                  className={`flex-1 sm:flex-none rounded-lg px-4 py-2 text-xs sm:text-sm font-medium ${
+                    activeView === 'discussion'
+                      ? 'bg-white text-black'
+                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  Discussion
+                </button>
+              </div>
             </div>
-
-            {/* Tab Switcher — hidden when a point is selected */}
-            {!selectedPoint && (
-              <div className="flex gap-1 bg-slate-800/60 rounded-lg p-1">
-                <button
-                  onClick={() => setActiveTab('highlights')}
-                  className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    activeTab === 'highlights'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Highlights
-                </button>
-                <button
-                  onClick={() => setActiveTab('themes')}
-                  className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${
-                    activeTab === 'themes'
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
-                  }`}
-                >
-                  Themes
-                </button>
-              </div>
-            )}
           </div>
+        </section>
 
-          {/* Tab Content */}
-          <div className="flex-1 overflow-hidden">
-            {selectedPoint ? (
-              <PointDetailPanel
-                point={selectedPoint}
-                onClose={handleCloseDetail}
-                getCountryName={getCountryName}
-                getLanguageName={getLanguageName}
-                getSpecialtyName={getSpecialtyName}
-              />
-            ) : activeTab === 'highlights' ? (
-              <HighlightsFeed
-                highlights={highlights}
-                selectedId={undefined}
-                onHighlightClick={handleHighlightClick}
-                isLoading={isLoading}
-              />
+        <section className="bg-black/50 backdrop-blur-sm pb-10">
+          <div className="max-w-7xl mx-auto px-6 py-6 lg:py-8">
+            {activeView === 'map' ? (
+              <div className="grid min-h-[min(92dvh,920px)] grid-cols-1 overflow-hidden rounded-2xl border border-white/10 bg-black/55 lg:grid-cols-[1fr_400px]">
+                {/* Globe Section */}
+                <div className="relative min-h-[340px] lg:min-h-0">
+                  <Globe
+                    ref={globeRef}
+                    data={mapData}
+                    onPointClick={handlePointClick}
+                    selectedPointId={selectedPoint?.id}
+                  />
+                </div>
+
+                {/* Sidebar */}
+                <aside
+                  className={`flex w-full flex-col transition-transform duration-300 lg:w-auto lg:min-h-0 ${
+                    isSidebarOpen ? 'translate-y-0' : 'translate-y-full lg:translate-y-0'
+                  } fixed bottom-0 left-0 right-0 z-40 h-[min(78dvh,640px)] rounded-t-2xl lg:relative lg:z-0 lg:h-auto lg:max-h-none lg:rounded-none`}
+                  style={{
+                    background: 'linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.82) 100%)',
+                    borderLeft: '1px solid rgba(255,255,255,0.08)',
+                  }}
+                >
+                  {/* Mobile Handle */}
+                  <div className="lg:hidden flex justify-center py-2 border-b border-white/10">
+                    <div className="w-12 h-1 rounded-full bg-slate-500" />
+                  </div>
+
+                  {/* Sidebar Header */}
+                  <div className="px-4 py-3 border-b border-white/10 bg-black/30">
+                    <div className="flex items-center justify-between mb-3">
+                      <h2 className="text-white font-semibold text-sm tracking-wide">
+                        {selectedPoint ? 'Story Detail' : 'Explore Stories'}
+                      </h2>
+                      {!isLoading && !selectedPoint && (
+                        <span className="text-xs text-white/60 bg-white/5 px-2 py-0.5 rounded-full border border-white/10">
+                          {highlights.length} voices
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Tab Switcher — hidden when a point is selected */}
+                    {!selectedPoint && (
+                      <div className="flex gap-1 bg-white/5 rounded-lg p-1 border border-white/10">
+                        <button
+                          onClick={() => setActiveTab('highlights')}
+                          className={`flex-1 py-1.5 text-xs font-medium rounded-md ${
+                            activeTab === 'highlights'
+                              ? 'bg-white text-black'
+                              : 'text-white/70 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          Highlights
+                        </button>
+                        <button
+                          onClick={() => setActiveTab('themes')}
+                          className={`flex-1 py-1.5 text-xs font-medium rounded-md ${
+                            activeTab === 'themes'
+                              ? 'bg-white text-black'
+                              : 'text-white/70 hover:text-white hover:bg-white/10'
+                          }`}
+                        >
+                          Themes
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tab Content */}
+                  <div className="min-h-0 flex-1 overflow-hidden">
+                    {selectedPoint ? (
+                      <PointDetailPanel
+                        point={selectedPoint}
+                        onClose={handleCloseDetail}
+                        getCountryName={getCountryName}
+                        getLanguageName={getLanguageName}
+                        getSpecialtyName={getSpecialtyName}
+                        discussionPostId={selectedPoint.discussionPostId}
+                        onOpenDiscussion={handleOpenDiscussionFromMap}
+                      />
+                    ) : activeTab === 'highlights' ? (
+                      <HighlightsFeed
+                        highlights={highlights}
+                        selectedId={null}
+                        onHighlightClick={handleHighlightClick}
+                        isLoading={isLoading}
+                      />
+                    ) : (
+                      <div className="h-full overflow-y-auto">
+                        <ThemesPanel
+                          themes={themes}
+                          selectedThemeId={selectedThemeId}
+                          onThemeClick={handleThemeClick}
+                          isLoading={isLoading}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </aside>
+              </div>
             ) : (
-              <div className="h-full overflow-y-auto">
-                <ThemesPanel
-                  themes={themes}
-                  selectedThemeId={selectedThemeId}
-                  onThemeClick={handleThemeClick}
+              <section className="min-h-[min(92dvh,920px)] overflow-hidden rounded-2xl border border-white/10 bg-black/55">
+                <DiscussionForum
+                  key={discussionForumKey}
+                  posts={discussionPosts}
                   isLoading={isLoading}
+                  initialPostId={focusDiscussionPostId}
+                  onViewOnMap={handleViewPostOnMap}
+                  postSort={postSort}
+                  onPostSortChange={setPostSort}
+                  onPostUpvoted={(postId, upvotes) =>
+                    setDiscussionPosts((prev) =>
+                      prev.map((p) => (p.id === postId ? { ...p, upvotes } : p))
+                    )
+                  }
                 />
-              </div>
+              </section>
             )}
           </div>
-        </aside>
+        </section>
       </div>
 
       {/* Sidebar Backdrop (Mobile) */}
-      {isSidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close sidebar"
+      {activeView === 'map' && isSidebarOpen && (
+        <div
           className="fixed inset-0 bg-black/60 z-30 lg:hidden backdrop-blur-sm"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -244,17 +326,21 @@ function PointDetailPanel({
   getCountryName,
   getLanguageName,
   getSpecialtyName,
+  discussionPostId,
+  onOpenDiscussion,
 }: {
   point: MapDataPoint;
   onClose: () => void;
   getCountryName: (code: string) => string;
   getLanguageName: (code: string) => string;
   getSpecialtyName: (value: string) => string;
+  discussionPostId?: string;
+  onOpenDiscussion?: (postId: string) => void;
 }) {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800/50">
+      <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
         <div className="flex items-center gap-3">
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
@@ -269,12 +355,12 @@ function PointDetailPanel({
             <p className="text-white font-semibold text-sm leading-tight">
               {getCountryName(point.country)}
             </p>
-            <p className="text-slate-400 text-xs mt-0.5">{point.careerStage}</p>
+            <p className="mt-0.5 text-xs text-white/45">{point.careerStage}</p>
           </div>
         </div>
         <button
           onClick={onClose}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          className="rounded-lg p-1.5 text-white/45 transition-colors hover:bg-white/10 hover:text-white"
           aria-label="Back to feed"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -284,48 +370,69 @@ function PointDetailPanel({
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-5">
-        {/* Quote */}
-        <div className="relative pl-4 border-l-2 border-blue-500 bg-slate-800/30 rounded-r-xl py-3 pr-3">
-          <p className="text-slate-200 text-sm leading-relaxed italic">
+      <div className="flex-1 space-y-5 overflow-y-auto p-4">
+        <div className="relative rounded-r-xl border-l-2 border-[#38BDF8] bg-white/[0.04] py-3 pl-4 pr-3">
+          <p className="text-sm italic leading-relaxed text-white/80">
             &ldquo;{point.highlight}&rdquo;
           </p>
         </div>
 
-        {/* Metadata */}
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">
+            Coordinates
+          </p>
+          <p className="mt-1 font-mono text-xs text-[#38BDF8]">
+            {point.coordinates.lat.toFixed(4)}, {point.coordinates.lng.toFixed(4)}
+          </p>
+        </div>
+
         <div className="space-y-2">
-          <p className="text-xs text-slate-500 uppercase tracking-widest">Details</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">Details</p>
           <div className="flex flex-wrap gap-2">
-            <span className="px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs">
-              {getSpecialtyName(point.metadata.specialty)}
-            </span>
-            <span className="px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs">
+            {point.metadata.specialty?.trim() ? (
+              <span className="rounded-full border border-[#38BDF8]/30 bg-[#38BDF8]/10 px-2.5 py-1 text-xs text-[#7DD3FC]">
+                {getSpecialtyName(point.metadata.specialty)}
+              </span>
+            ) : (
+              <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs text-white/60">
+                Group voice
+              </span>
+            )}
+            <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs text-white/70">
               {getLanguageName(point.metadata.language)}
             </span>
-            <span className="px-2.5 py-1 rounded-full bg-slate-800 border border-slate-700 text-slate-300 text-xs">
+            <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs text-white/70">
               {point.metadata.practiceSetting}
             </span>
           </div>
         </div>
 
-        {/* Career Stage */}
         <div className="space-y-2">
-          <p className="text-xs text-slate-500 uppercase tracking-widest">Career Stage</p>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">Career stage</p>
           <div className="flex items-center gap-2">
             <span
-              className="w-2.5 h-2.5 rounded-full"
+              className="h-2.5 w-2.5 rounded-full"
               style={{ backgroundColor: getCareerStageColor(point.careerStage) }}
             />
-            <span className="text-slate-300 text-sm">{point.careerStage}</span>
+            <span className="text-sm text-white/75">{point.careerStage}</span>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 border-t border-slate-800/50">
+      <div className="space-y-2 border-t border-white/10 px-4 py-3">
+        {discussionPostId && onOpenDiscussion && (
+          <button
+            type="button"
+            onClick={() => onOpenDiscussion(discussionPostId)}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#38BDF8]/35 bg-[#38BDF8]/10 py-2.5 text-sm font-medium text-[#7DD3FC] transition-colors hover:bg-[#38BDF8]/20"
+          >
+            Open discussion thread
+          </button>
+        )}
         <button
           onClick={onClose}
-          className="w-full py-2 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+          className="flex w-full items-center justify-center gap-2 rounded-xl py-2 text-sm text-white/45 transition-colors hover:bg-white/5 hover:text-white"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

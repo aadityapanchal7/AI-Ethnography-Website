@@ -22,11 +22,14 @@ export default function HighlightsFeed({
   const filteredHighlights = useMemo(() => {
     if (!searchQuery.trim()) return highlights;
     const query = searchQuery.toLowerCase();
-    return highlights.filter((h) =>
-      h.highlight.toLowerCase().includes(query) ||
-      h.metadata.specialty.toLowerCase().includes(query) ||
-      h.metadata.country.toLowerCase().includes(query)
-    );
+    return highlights.filter((h) => {
+      const spec = (h.metadata.specialty ?? '').toLowerCase();
+      return (
+        h.highlight.toLowerCase().includes(query) ||
+        spec.includes(query) ||
+        h.metadata.country.toLowerCase().includes(query)
+      );
+    });
   }, [highlights, searchQuery]);
 
   const getCountryName = (code: string) =>
@@ -142,9 +145,11 @@ export default function HighlightsFeed({
 
                   {/* Tags */}
                   <div className="flex flex-wrap gap-1.5">
-                    <span className="px-2 py-0.5 rounded-md text-xs text-blue-300 bg-blue-500/10 border border-blue-500/15">
-                      {getSpecialtyName(highlight.metadata.specialty)}
-                    </span>
+                    {highlight.metadata.specialty?.trim() ? (
+                      <span className="px-2 py-0.5 rounded-md text-xs text-blue-300 bg-blue-500/10 border border-blue-500/15">
+                        {getSpecialtyName(highlight.metadata.specialty)}
+                      </span>
+                    ) : null}
                     <span className="px-2 py-0.5 rounded-md text-xs text-slate-400 bg-slate-800/60 border border-slate-700/40">
                       {highlight.metadata.practiceSetting}
                     </span>

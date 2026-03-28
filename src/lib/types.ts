@@ -15,12 +15,24 @@ export type PracticeSetting =
 
 // Core metadata interface matching standardized fields
 export interface Metadata {
-  country: string;        // ISO 3166-1 alpha-2 code
+  /** Country or region the group is primarily based in (ISO 3166-1 alpha-2) */
+  country: string;
   careerStage: CareerStage;
-  specialty: string;      // Controlled vocabulary
-  language: string;       // ISO 639-1 code
+  language: string;       // ISO 639-1 code — primary language in the recording
   practiceSetting: PracticeSetting;
+  /** Optional; themes may be inferred from transcripts instead */
+  specialty?: string;
+  /** Browser geolocation when user opts in (sent to AWS as lat/lng on submission) */
+  coordinates?: Coordinates;
+  locationSource?: 'browser';
+  /** This study prioritizes group dialogue (not solo individual submissions). */
+  isGroupSubmission: boolean;
+  /** Ages and identities of each person contributing, as the group is comfortable sharing */
+  contributorIdentities?: string;
 }
+
+/** Sort order for discussion list (API query + client mock). */
+export type DiscussionPostSort = 'recent' | 'upvotes' | 'title';
 
 // Geographic coordinates
 export interface Coordinates {
@@ -37,6 +49,41 @@ export interface Testimonial {
   submittedAt: string;    // ISO 8601 timestamp
   coordinates: Coordinates;
   themeIds?: string[];    // Associated theme IDs
+}
+
+// Transcription status for voice-first discussion posts
+export type TranscriptionStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+// Comment on a discussion post (future: API + moderation)
+export interface DiscussionComment {
+  id: string;
+  postId: string;
+  body: string;
+  authorLabel: string;
+  createdAt: string;
+}
+
+// Discussion thread post: voice submission → transcript → LLM title/summary → thread
+// Map: same submission has geolocation; map point id aligns with sourceSubmissionId when present
+export interface DiscussionPost {
+  id: string;
+  title: string;
+  /** AI / editorial short summary shown in cards and map-adjacent UI */
+  summary: string;
+  /** Longer excerpt or full story text derived from transcript */
+  body: string;
+  tags: string[];
+  createdAt: string;
+  upvotes: number;
+  metadata: Metadata;
+  audioUrl?: string;
+  transcriptText?: string;
+  transcriptionStatus: TranscriptionStatus;
+  /** Links this post to the same logical submission as map highlights */
+  sourceSubmissionId?: string;
+  /** Redundant copy of submission coordinates for map handoff without a round-trip */
+  coordinates?: Coordinates;
+  comments: DiscussionComment[];
 }
 
 // Theme categorization
@@ -87,6 +134,8 @@ export interface MapDataPoint {
   careerStage: CareerStage;
   highlight: string;
   metadata: Metadata;
+  /** Optional link back to discussion post id when this marker is voice-derived */
+  discussionPostId?: string;
 }
 
 // Share flow state management
