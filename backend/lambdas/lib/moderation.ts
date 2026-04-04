@@ -1,9 +1,11 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
-import { anthropicResponseText, extractJsonObject } from './bedrock-json';
+import { anthropicResponseText, tryParseAnyJsonObject } from './bedrock-json';
 import { MODERATION_SYSTEM_PROMPT } from './guidelines';
 import { summarizeTranscript } from './summarize-transcript';
 
-const client = new BedrockRuntimeClient({});
+const bedrockRegion =
+  process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
+const client = new BedrockRuntimeClient({ region: bedrockRegion });
 
 export interface ModerationResult {
   approved: boolean;
@@ -64,12 +66,19 @@ export async function moderateTranscript(
 
   const raw = JSON.parse(new TextDecoder().decode(out.body));
   const text = anthropicResponseText(raw);
-  const jsonStr = extractJsonObject(text);
-  if (!jsonStr) {
+  const obj = tryParseAnyJsonObject(text);
+  if (!obj) {
+    console.error(
+      JSON.stringify({
+        msg: 'moderation-json-miss',
+        textPrefix: text.slice(0, 400),
+        textLen: text.length,
+      })
+    );
     throw new Error('Moderation model did not return JSON');
   }
 
-  const parsed = JSON.parse(jsonStr) as ModerationResult;
+  const parsed = obj as ModerationResult;
   if (typeof parsed.approved !== 'boolean') {
     throw new Error('Invalid moderation JSON');
   }

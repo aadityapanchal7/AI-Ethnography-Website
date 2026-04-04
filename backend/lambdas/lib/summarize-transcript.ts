@@ -1,7 +1,9 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
-import { anthropicResponseText, extractJsonObject } from './bedrock-json';
+import { anthropicResponseText, tryParseAnyJsonObject } from './bedrock-json';
 
-const client = new BedrockRuntimeClient({});
+const bedrockRegion =
+  process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
+const client = new BedrockRuntimeClient({ region: bedrockRegion });
 
 export interface SummarizeResult {
   title: string;
@@ -47,15 +49,23 @@ export async function summarizeTranscript(
 
   const raw = JSON.parse(new TextDecoder().decode(out.body));
   const text = anthropicResponseText(raw);
-  const jsonStr = extractJsonObject(text);
-  if (!jsonStr) {
+  const parsed = tryParseAnyJsonObject(text);
+  if (!parsed) {
+    console.error(
+      JSON.stringify({
+        msg: 'summarize-json-miss',
+        textPrefix: text.slice(0, 400),
+        textLen: text.length,
+      })
+    );
     throw new Error('Summarize model did not return JSON');
   }
 
-  const parsed = JSON.parse(jsonStr) as Record<string, unknown>;
-  return {
-    title: String(parsed.title ?? '').slice(0, 200),
-    summary: String(parsed.summary ?? '').slice(0, 2000),
-    tags: Array.isArray(parsed.tags) ? parsed.tags.map(String).slice(0, 8) : [],
-  };
+  let title = String(parsed.title ?? '').trim().slice(0, 200);
+  let summary = String(parsed.summary ?? '').trim().slice(0, 2000);
+  const tags = Array.isArray(parsed.tags) ? parsed.tags.map(String).slice(0, 8) : [];
+  const t = transcript.trim();
+  if (!title) title = t ? `${t.slice(0, 88)}${t.length > 88 ? '…' : ''}` : 'Voice note';
+  if (!summary) summary = t.slice(0, 500) || 'Unable to summarize transcript.';
+  return { title, summary, tags };
 }
