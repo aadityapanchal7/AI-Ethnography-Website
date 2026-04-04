@@ -186,7 +186,7 @@ export const handler = async (event: { detail?: TranscribeDetail }) => {
         submissionId: jobName,
         title: moderation.title,
         summary: moderation.summary,
-        body: moderation.summary,
+        body: moderation.summary.trim() || transcriptText.trim(),
         tags: moderation.tags,
         metadata,
         transcriptionStatus: 'completed',

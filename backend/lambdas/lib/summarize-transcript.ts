@@ -1,4 +1,5 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
+import { anthropicResponseText, extractJsonObject } from './bedrock-json';
 
 const client = new BedrockRuntimeClient({});
 
@@ -45,13 +46,13 @@ export async function summarizeTranscript(
   );
 
   const raw = JSON.parse(new TextDecoder().decode(out.body));
-  const text: string = raw.content?.[0]?.text ?? '';
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) {
+  const text = anthropicResponseText(raw);
+  const jsonStr = extractJsonObject(text);
+  if (!jsonStr) {
     throw new Error('Summarize model did not return JSON');
   }
 
-  const parsed = JSON.parse(match[0]) as Record<string, unknown>;
+  const parsed = JSON.parse(jsonStr) as Record<string, unknown>;
   return {
     title: String(parsed.title ?? '').slice(0, 200),
     summary: String(parsed.summary ?? '').slice(0, 2000),

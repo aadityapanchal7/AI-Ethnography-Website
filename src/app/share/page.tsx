@@ -10,7 +10,7 @@ import ReviewSubmit from '@/components/ReviewSubmit';
 import StoryPromptGuide from '@/components/StoryPromptGuide';
 import BackgroundGlobe from '@/components/BackgroundGlobe';
 import type { Metadata, ShareFlowStep } from '@/lib/types';
-import { submitTestimonial } from '@/lib/api';
+import { isLiveApiConfigured, submitTestimonial } from '@/lib/api';
 
 const steps: { id: ShareFlowStep; label: string }[] = [
   { id: 'consent', label: 'Consent' },
@@ -94,6 +94,14 @@ export default function SharePage() {
               <span className="text-white/70">Group voice or video recordings only</span> (no text uploads) —
               your shared experience with AI in health, medicine, and community wellbeing. Target roughly 3–5 minutes; hard cap 5 minutes.
             </p>
+            {!isLiveApiConfigured() ? (
+              <p className="mt-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
+                <span className="font-semibold text-amber-200">Local demo mode:</span> this app is not calling AWS
+                (no <code className="rounded bg-black/30 px-1 text-xs">NEXT_PUBLIC_API_BASE_URL</code>). Submissions will
+                not appear in Explore. Add your API Gateway URL to <code className="rounded bg-black/30 px-1 text-xs">.env.local</code> and
+                restart <code className="rounded bg-black/30 px-1 text-xs">npm run dev</code> to use S3 and the real discussion pipeline.
+              </p>
+            ) : null}
           </div>
         </div>
 
