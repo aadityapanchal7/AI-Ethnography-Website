@@ -4,7 +4,7 @@ import { TiMicrophoneOutline } from "react-icons/ti";
 import { FaLightbulb, FaDatabase } from "react-icons/fa";
 import { HiOutlineDocumentText, HiOutlineGlobe, HiOutlineChatAlt2, HiOutlineUserGroup } from "react-icons/hi";
 import { Ubuntu } from 'next/font/google';
-import BackgroundGlobe from '@/components/BackgroundGlobe';
+import HomeBackgroundGlobe from '@/components/HomeBackgroundGlobe';
 
 export const metadata: Metadata = {
   title: "Voices of AI in Medicine | MIT Critical Data",
@@ -21,7 +21,7 @@ export default function Home() {
   return (
     <>
       {/* Background Globe - behind all content */}
-      <BackgroundGlobe />
+      <HomeBackgroundGlobe />
 
       {/* Main content */}
       <div className={`min-h-screen ${ubuntu.className} relative z-10`}>

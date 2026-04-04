@@ -1,8 +1,11 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
+import { anthropicResponseText, tryParseAnyJsonObject } from './bedrock-json';
 import { MODERATION_SYSTEM_PROMPT } from './guidelines';
 import { summarizeTranscript } from './summarize-transcript';
 
-const client = new BedrockRuntimeClient({});
+const bedrockRegion =
+  process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
+const client = new BedrockRuntimeClient({ region: bedrockRegion });
 
 export interface ModerationResult {
   approved: boolean;
@@ -62,21 +65,46 @@ export async function moderateTranscript(
   );
 
   const raw = JSON.parse(new TextDecoder().decode(out.body));
-  const text: string = raw.content?.[0]?.text ?? '';
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) {
+  const text = anthropicResponseText(raw);
+  const obj = tryParseAnyJsonObject(text);
+  if (!obj) {
+    console.error(
+      JSON.stringify({
+        msg: 'moderation-json-miss',
+        textPrefix: text.slice(0, 400),
+        textLen: text.length,
+      })
+    );
     throw new Error('Moderation model did not return JSON');
   }
 
-  const parsed = JSON.parse(match[0]) as ModerationResult;
+  const parsed = obj as ModerationResult;
   if (typeof parsed.approved !== 'boolean') {
     throw new Error('Invalid moderation JSON');
   }
+
+  let title = String(parsed.title ?? '').trim();
+  let summary = String(parsed.summary ?? '').trim();
+  let tags = Array.isArray(parsed.tags) ? parsed.tags.map(String).slice(0, 5) : [];
+
+  if (parsed.approved && (!title || !summary)) {
+    try {
+      const s = await summarizeTranscript(transcript, modelId);
+      if (!title) title = s.title.trim() || 'Voice note';
+      if (!summary) summary = s.summary.trim() || transcript.trim().slice(0, 500);
+      if (tags.length === 0 && s.tags.length > 0) tags = s.tags.slice(0, 5);
+    } catch (err) {
+      console.error('summarizeTranscript fallback after empty moderation title/summary', err);
+      if (!title) title = 'Voice note';
+      if (!summary) summary = transcript.trim().slice(0, 500) || 'Submitted audio story.';
+    }
+  }
+
   return {
     approved: parsed.approved,
     reason: String(parsed.reason ?? ''),
-    title: String(parsed.title ?? ''),
-    summary: String(parsed.summary ?? ''),
-    tags: Array.isArray(parsed.tags) ? parsed.tags.map(String).slice(0, 5) : [],
+    title,
+    summary,
+    tags,
   };
 }

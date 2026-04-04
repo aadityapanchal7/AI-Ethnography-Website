@@ -1,6 +1,5 @@
 import type { NextConfig } from "next";
-
-const path = require('path');
+import path from "path";
 
 const withPWA = require("@ducanh2912/next-pwa").default({
   dest: "public",
@@ -10,17 +9,12 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 });
 
 const nextConfig: NextConfig = {
-  // Enable React strict mode for better development experience
   reactStrictMode: true,
 
   turbopack: {
-    root: path.join(__dirname), // points to ai-ethnography-website folder
+    root: path.join(__dirname),
   },
 
-  // Use webpack instead of turbopack for compatibility with react-globe.gl
-  // turbopack: false,
-
-  // Transpile packages that need it
   transpilePackages: ["three", "react-globe.gl"],
 };
 

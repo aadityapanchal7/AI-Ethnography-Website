@@ -178,15 +178,25 @@ export const handler = async (event: { detail?: TranscribeDetail }) => {
   const postId = randomUUID();
   const metadata = submission.metadata as Record<string, unknown>;
 
+  const transcriptTrim = transcriptText.trim();
+  const safeTitle =
+    moderation.title.trim() ||
+    (transcriptTrim ? `${transcriptTrim.slice(0, 88)}${transcriptTrim.length > 88 ? '…' : ''}` : 'Voice note');
+  const safeSummary =
+    moderation.summary.trim() ||
+    transcriptTrim.slice(0, 500) ||
+    'Submitted audio story.';
+  const safeBody = moderation.summary.trim() || transcriptTrim;
+
   await ddb.send(
     new PutCommand({
       TableName: postsTable,
       Item: {
         id: postId,
         submissionId: jobName,
-        title: moderation.title,
-        summary: moderation.summary,
-        body: moderation.summary,
+        title: safeTitle,
+        summary: safeSummary,
+        body: safeBody,
         tags: moderation.tags,
         metadata,
         transcriptionStatus: 'completed',

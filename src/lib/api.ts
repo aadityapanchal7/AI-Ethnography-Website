@@ -1,15 +1,7 @@
 /**
- * API Layer - Mock implementation ready for AWS migration
- * 
- * This module provides a clean interface between UI components and data sources.
- * Currently uses mock data, but is structured to swap to AWS API Gateway endpoints
- * by simply changing the function implementations.
- * 
- * Future AWS integration:
- * - submitTestimonial: POST to API Gateway → Lambda → S3 (audio) + RDS (metadata)
- * - getHighlights: GET from API Gateway → Lambda → RDS
- * - getMapData: GET from API Gateway → Lambda → RDS
- * - getThemes: GET from API Gateway → Lambda → RDS
+ * API layer: talks to AWS HTTP API when `NEXT_PUBLIC_API_BASE_URL` is set (trimmed, no trailing slash).
+ * If that env var is empty, the browser never calls API Gateway — submissions succeed as a **mock** only
+ * (nothing in S3/DynamoDB), and Explore uses bundled mock data. Restart `next dev` after changing the env var.
  */
 
 import type {
@@ -27,9 +19,22 @@ import type {
 } from './types';
 import { mockDiscussionPosts, mockTestimonials, mockThemes, specialties } from './mockData';
 
-// Environment variable for API base URL
-// Set to AWS API Gateway URL in production
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+function normalizePublicApiBase(raw: string | undefined): string {
+  return (raw ?? '').trim().replace(/\/+$/, '');
+}
+
+/** AWS API Gateway base URL from CDK output `HttpApiUrl`, or empty for mock-only mode. */
+const API_BASE = normalizePublicApiBase(process.env.NEXT_PUBLIC_API_BASE_URL);
+
+let warnedMockMode = false;
+function warnMockSubmitOnce() {
+  if (warnedMockMode || typeof window === 'undefined' || process.env.NODE_ENV === 'production') return;
+  warnedMockMode = true;
+  console.warn(
+    '[API] NEXT_PUBLIC_API_BASE_URL is unset → submissions are MOCK (no S3 upload, no post in AWS). ' +
+      'Add your deployed HttpApiUrl to .env.local and restart next dev to use the real pipeline.'
+  );
+}
 
 // Simulate network delay for realistic UX testing
 const simulateDelay = (ms: number = 500) => 
@@ -129,12 +134,18 @@ export async function submitTestimonial(payload: SubmitPayload): Promise<SubmitR
 
   await simulateDelay(1000);
   const newId = `testimonial-${Date.now()}`;
+  warnMockSubmitOnce();
   console.log('[API] Testimonial submitted (mock):', {
     id: newId,
     metadata: payload.metadata,
     audioSize: payload.audioBlob.size,
   });
   return { success: true, id: newId };
+}
+
+/** True when the browser bundle is configured to call AWS (API Gateway). */
+export function isLiveApiConfigured(): boolean {
+  return Boolean(API_BASE);
 }
 
 function mapApiPost(raw: Record<string, unknown>): DiscussionPost {
