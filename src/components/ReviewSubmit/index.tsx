@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import type { Metadata } from '@/lib/types';
 import { countries, languages, specialties } from '@/lib/mockData';
 
@@ -84,18 +85,18 @@ export default function ReviewSubmit({
           how AI is impacting medicine worldwide.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <a
-            href="/explore"
+          <Link
+            href="/map"
             className="px-8 py-3 rounded-xl font-medium bg-white text-slate-950 hover:bg-slate-100 shadow-lg transition-all"
           >
-            Explore Experiences
-          </a>
-          <a
+            Explore the Map
+          </Link>
+          <Link
             href="/"
             className="px-8 py-3 rounded-xl font-medium text-slate-300 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
           >
             Return Home
-          </a>
+          </Link>
         </div>
       </div>
     );

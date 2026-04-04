@@ -25,6 +25,8 @@ function normalizePublicApiBase(raw: string | undefined): string {
 
 /** AWS API Gateway base URL from CDK output `HttpApiUrl`, or empty for mock-only mode. */
 const API_BASE = normalizePublicApiBase(process.env.NEXT_PUBLIC_API_BASE_URL);
+const VOTER_COOKIE_NAME = 'ae_voter_id';
+const VOTER_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365; // 1 year
 
 let warnedMockMode = false;
 function warnMockSubmitOnce() {
@@ -39,6 +41,40 @@ function warnMockSubmitOnce() {
 // Simulate network delay for realistic UX testing
 const simulateDelay = (ms: number = 500) => 
   new Promise(resolve => setTimeout(resolve, ms));
+
+function getCookieValue(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const encodedName = `${encodeURIComponent(name)}=`;
+  const parts = document.cookie.split(';');
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (!trimmed.startsWith(encodedName)) continue;
+    const value = trimmed.slice(encodedName.length);
+    return value ? decodeURIComponent(value) : null;
+  }
+  return null;
+}
+
+function isValidVoterId(value: string | null): value is string {
+  if (!value) return false;
+  // Keep validation permissive enough for UUIDs and future token formats.
+  return /^[A-Za-z0-9_-]{16,128}$/.test(value);
+}
+
+function ensureAnonymousVoterId(): string | null {
+  if (typeof document === 'undefined') return null;
+  const existing = getCookieValue(VOTER_COOKIE_NAME);
+  if (isValidVoterId(existing)) return existing;
+
+  const next = crypto.randomUUID().replace(/[^A-Za-z0-9_-]/g, '_');
+  document.cookie = [
+    `${encodeURIComponent(VOTER_COOKIE_NAME)}=${encodeURIComponent(next)}`,
+    `Max-Age=${VOTER_COOKIE_MAX_AGE_SECONDS}`,
+    'Path=/',
+    'SameSite=Lax',
+  ].join('; ');
+  return next;
+}
 
 /**
  * Submit a new testimonial
@@ -325,9 +361,13 @@ export async function upvoteDiscussionPost(
     return { ok: true };
   }
   try {
+    const voterId = ensureAnonymousVoterId();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (voterId) headers['X-Voter-Id'] = voterId;
+
     const res = await fetch(`${API_BASE}/posts/${encodeURIComponent(postId)}/upvote`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
     });
     if (!res.ok) {
       return { ok: false, error: (await res.text()) || 'Could not upvote' };

@@ -60,10 +60,10 @@ export default function Home() {
                   </svg>
                 </Link>
                 <Link
-                  href="/explore"
+                  href="/map"
                   className="inline-flex items-center gap-2 px-7 py-3.5 rounded-lg font-semibold text-sm border border-white/25 text-white hover:bg-white/10 transition-all"
                 >
-                  Explore Stories
+                  Explore the Map
                 </Link>
               </div>
 
@@ -116,7 +116,7 @@ export default function Home() {
                     num: "2",
                     title: "We build a global research archive",
                     body: "Contributions are collected continuously, allowing the project to evolve alongside changing technologies, policies, and social norms. The platform functions as a living document that also captures silences, hesitations, and omissions.",
-                    cta: { label: "Explore the Archive", href: "/explore" },
+                    cta: { label: "Explore the Archive", href: "/map" },
                   },
                   {
                     num: "3",
@@ -319,7 +319,8 @@ export default function Home() {
             <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-white/40">
               <p>© {new Date().getFullYear()} MIT Critical Data</p>
               <div className="flex gap-8">
-                <Link href="/explore" className="hover:text-white transition-colors">Explore</Link>
+                <Link href="/map" className="hover:text-white transition-colors">Map</Link>
+                <Link href="/discussion" className="hover:text-white transition-colors">Discussion</Link>
                 <Link href="/share" className="hover:text-white transition-colors">Share</Link>
 
               </div>

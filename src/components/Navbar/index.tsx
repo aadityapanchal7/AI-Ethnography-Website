@@ -25,7 +25,7 @@ export default function Navbar() {
     };
   }, []);
 
-  {/* TODO: figure out better design for navbar content -- specifically how to display share/explore pages */ }
+  {/* TODO: refine navbar content and ordering */}
   return (
     <div className="fixed top-0 left-0 right-0 z-50 px-4 pt-4">
       <header
@@ -50,10 +50,16 @@ export default function Navbar() {
             </Link>
             <nav className="items-center gap-4 hidden sm:flex">
               <Link
-                href="/explore"
+                href="/map"
                 className="text-slate-300 hover:text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
               >
-                Explore
+                Map
+              </Link>
+              <Link
+                href="/discussion"
+                className="text-slate-300 hover:text-white px-4 py-2 rounded-lg transition-colors font-medium text-sm"
+              >
+                Discussion
               </Link>
               <Link
                 href="/share"

@@ -80,6 +80,13 @@ export class EthnographyStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
+    const postVotesTable = new dynamodb.Table(this, 'PostVotes', {
+      partitionKey: { name: 'voteKey', type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      timeToLiveAttribute: 'ttl',
+    });
+
     const transcribeDataAccessRole = new iam.Role(this, 'TranscribeDataAccess', {
       assumedBy: new iam.ServicePrincipal('transcribe.amazonaws.com'),
       description: 'Transcribe: read audio bucket, write transcript bucket',
@@ -197,6 +204,7 @@ export class EthnographyStack extends cdk.Stack {
       SUBMISSIONS_TABLE: submissionsTable.tableName,
       POSTS_TABLE: postsTable.tableName,
       COMMENTS_TABLE: commentsTable.tableName,
+      VOTES_TABLE: postVotesTable.tableName,
       TRANSCRIBE_DATA_ACCESS_ROLE_ARN: transcribeDataAccessRole.roleArn,
       MODERATION_MODEL_ID,
       ...extra,
@@ -296,6 +304,7 @@ export class EthnographyStack extends cdk.Stack {
       ...bundling,
     });
     postsTable.grantReadWriteData(upvotePostFn);
+    postVotesTable.grantReadWriteData(upvotePostFn);
 
     const processTranscribeFn = new NodejsFunction(this, 'ProcessTranscribeFn', {
       runtime: lambda.Runtime.NODEJS_20_X,
@@ -342,7 +351,7 @@ export class EthnographyStack extends cdk.Stack {
     const httpApi = new HttpApi(this, 'HttpApi', {
       apiName: 'ethnography-api',
       corsPreflight: {
-        allowHeaders: ['Content-Type'],
+        allowHeaders: ['Content-Type', 'X-Voter-Id'],
         allowMethods: [
           CorsHttpMethod.GET,
           CorsHttpMethod.POST,

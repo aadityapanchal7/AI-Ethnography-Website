@@ -104,6 +104,7 @@ If Bedrock is not ready yet, set environment variable on **ProcessTranscribeFn**
 | GET | `/posts` | List published posts |
 | GET | `/posts/{id}` | Post + comments |
 | POST | `/posts/{id}/comments` | Body `{ "text": "..." }` — anonymous |
+| POST | `/posts/{id}/upvote` | Requires `X-Voter-Id` header; one vote per post per voter id |
 
 ## Frontend behavior (already wired)
 
