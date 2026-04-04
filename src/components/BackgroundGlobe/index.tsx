@@ -49,18 +49,28 @@ const BackgroundGlobe: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Dimension management
+  // Dimension management — use layout viewport (respects body zoom) + visualViewport for mobile toolbars
   useEffect(() => {
     const updateDimensions = () => {
+      const el = document.documentElement;
+      const vv = window.visualViewport;
       setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
+        width: Math.max(vv?.width ?? el.clientWidth, el.clientWidth),
+        height: Math.max(vv?.height ?? el.clientHeight, el.clientHeight),
       });
     };
 
     updateDimensions();
+    const t = window.setTimeout(updateDimensions, 100);
     window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
+    window.visualViewport?.addEventListener('resize', updateDimensions);
+    window.visualViewport?.addEventListener('scroll', updateDimensions);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener('resize', updateDimensions);
+      window.visualViewport?.removeEventListener('resize', updateDimensions);
+      window.visualViewport?.removeEventListener('scroll', updateDimensions);
+    };
   }, []);
 
   // Select points based on device
@@ -197,11 +207,12 @@ const BackgroundGlobe: React.FC = () => {
         position: 'fixed',
         top: 0,
         left: 0,
-        width: '100vw',
-        height: '100vh',
+        width: '100%',
+        height: '100%',
         zIndex: 0,
         pointerEvents: 'none',
         opacity: isMobile ? 0.5 : 0.7,
+        isolation: 'isolate',
       }}
     >
       <GlobeGL
@@ -210,8 +221,8 @@ const BackgroundGlobe: React.FC = () => {
         height={dimensions.height}
 
         // Textures
-        globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-        bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+        globeImageUrl="https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+        bumpImageUrl="https://unpkg.com/three-globe/example/img/earth-topology.png"
         backgroundImageUrl=""
 
         // Background color (transparent for light theme)

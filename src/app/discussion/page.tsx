@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import BackgroundGlobe from '@/components/BackgroundGlobe';
 import type { DiscussionPost, DiscussionPostSort } from '@/lib/types';
 import { getDiscussionPosts } from '@/lib/api';
-import { countries } from '@/lib/mockData';
+import { countries, specialties } from '@/lib/mockData';
 
 export default function DiscussionPage() {
   const [discussionPosts, setDiscussionPosts] = useState<DiscussionPost[]>([]);
@@ -33,12 +33,14 @@ export default function DiscussionPage() {
     const normalized = query.toLowerCase();
     return discussionPosts.filter((post) => {
       const countryName = countryLabel(post.metadata.country).toLowerCase();
+      const specialty = specialtyLabel(post.metadata.specialty).toLowerCase();
       return (
         post.title.toLowerCase().includes(normalized) ||
         post.summary.toLowerCase().includes(normalized) ||
         post.body.toLowerCase().includes(normalized) ||
         post.tags.join(' ').toLowerCase().includes(normalized) ||
-        countryName.includes(normalized)
+        countryName.includes(normalized) ||
+        specialty.includes(normalized)
       );
     });
   }, [discussionPosts, query]);
@@ -100,7 +102,9 @@ export default function DiscussionPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {filteredPosts.map((post) => (
+                  {filteredPosts.map((post) => {
+                    const focus = specialtyLabel(post.metadata.specialty);
+                    return (
                     <Link
                       key={post.id}
                       href={`/discussion/${encodeURIComponent(post.id)}`}
@@ -120,14 +124,16 @@ export default function DiscussionPage() {
                             {post.title}
                           </h2>
                           <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-white/70">{post.summary}</p>
-                          <div className="mt-3 flex items-center gap-3 text-xs text-white/55">
+                          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-white/55">
+                            {focus ? <span className="text-[#7DD3FC]/80">{focus}</span> : null}
                             <span>{post.comments.length} comments</span>
                             {post.tags.length > 0 && <span>#{post.tags[0]}</span>}
                           </div>
                         </div>
                       </div>
                     </Link>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -140,6 +146,11 @@ export default function DiscussionPage() {
 
 function countryLabel(code: string): string {
   return countries.find((country) => country.code === code)?.name ?? code;
+}
+
+function specialtyLabel(value: string | undefined): string {
+  if (!value?.trim()) return '';
+  return specialties.find((s) => s.value === value)?.label ?? value;
 }
 
 function timeAgo(dateIso: string): string {

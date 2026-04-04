@@ -9,6 +9,7 @@ import ThemesPanel from '@/components/ThemesPanel';
 import type { Testimonial, Theme, MapDataPoint } from '@/lib/types';
 import { getHighlights, getMapData, getThemes } from '@/lib/api';
 import { countries, languages, specialties } from '@/lib/mockData';
+import { practiceSettingLabel } from '@/lib/metadataDisplay';
 import type { GlobeHandle } from '@/components/Globe';
 
 const Globe = dynamic(() => import('@/components/Globe'), {
@@ -120,7 +121,7 @@ export default function MapPageClient() {
   }, []);
 
   const handleOpenDiscussionFromMap = useCallback((postId: string) => {
-    router.push(`/discussion?post=${encodeURIComponent(postId)}`);
+    router.push(`/discussion/${encodeURIComponent(postId)}`);
   }, [router]);
 
   const getCountryName = (code: string) =>
@@ -339,10 +340,20 @@ function PointDetailPanel({
               {getLanguageName(point.metadata.language)}
             </span>
             <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs text-white/70">
-              {point.metadata.practiceSetting}
+              {practiceSettingLabel(point.metadata.practiceSetting)}
+            </span>
+            <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-xs text-white/70">
+              Group: {point.metadata.isGroupSubmission ? 'Yes' : 'No'}
             </span>
           </div>
         </div>
+
+        {point.metadata.contributorIdentities?.trim() ? (
+          <div className="space-y-1">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">Speakers</p>
+            <p className="text-xs text-white/65 leading-relaxed line-clamp-6">{point.metadata.contributorIdentities.trim()}</p>
+          </div>
+        ) : null}
 
         <div className="space-y-2">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-white/35">Career stage</p>

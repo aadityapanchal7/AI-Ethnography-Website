@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { getDiscussionPostById, postAnonymousComment, upvoteDiscussionPost } from '@/lib/api';
 import type { DiscussionPost } from '@/lib/types';
 import BackgroundGlobe from '@/components/BackgroundGlobe';
+import DiscussionSubmissionMeta from '@/components/DiscussionSubmissionMeta';
 import { countries } from '@/lib/mockData';
 
 export default function DiscussionPostPage() {
@@ -19,6 +20,7 @@ export default function DiscussionPostPage() {
   const [isCommenting, setIsCommenting] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
   const [isUpvoting, setIsUpvoting] = useState(false);
+  const [showTranscript, setShowTranscript] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -122,14 +124,13 @@ export default function DiscussionPostPage() {
             </p>
             <h1 className="mt-2 text-2xl font-semibold text-white">{post.title}</h1>
             <p className="mt-3 text-sm leading-relaxed text-white/70">{post.summary}</p>
-            {post.body?.trim() && <p className="mt-4 text-sm leading-7 text-white/80">{post.body}</p>}
 
             <div className="mt-5 flex flex-wrap items-center gap-3 text-sm">
               <button
                 type="button"
                 onClick={() => void handleUpvote()}
                 disabled={isUpvoting}
-                className="rounded-lg border border-white/15 bg-white/[0.05] px-3 py-2 text-white hover:border-white/30 disabled:opacity-50"
+                className="rounded-lg border border-[#38BDF8]/30 bg-[#38BDF8]/[0.07] px-3 py-2 text-[#7DD3FC] hover:bg-[#38BDF8]/15 disabled:opacity-50"
               >
                 {isUpvoting ? 'Upvoting...' : `Upvote (${post.upvotes})`}
               </button>
@@ -139,10 +140,54 @@ export default function DiscussionPostPage() {
             {post.tags.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
                 {post.tags.map((tag) => (
-                  <span key={tag} className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-xs text-white/70">
+                  <span
+                    key={tag}
+                    className="rounded-full border border-[#38BDF8]/20 bg-[#38BDF8]/[0.06] px-2.5 py-1 text-xs text-[#7DD3FC]/75"
+                  >
                     #{tag}
                   </span>
                 ))}
+              </div>
+            )}
+
+            <div className="mt-6">
+              <DiscussionSubmissionMeta
+                metadata={post.metadata}
+                transcriptionStatus={post.transcriptionStatus}
+                audioUrl={post.audioUrl}
+                variant="page"
+              />
+            </div>
+
+            {post.body?.trim() && (
+              <div className="mt-6 rounded-xl border border-white/10 bg-white/[0.04] p-4">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#38BDF8]/75">
+                    Story excerpt
+                  </p>
+                  {post.transcriptText && (
+                    <button
+                      type="button"
+                      onClick={() => setShowTranscript((v) => !v)}
+                      className="text-[11px] text-white/40 transition-colors hover:text-white/70"
+                    >
+                      {showTranscript ? 'Hide transcript' : 'Show transcript'}
+                    </button>
+                  )}
+                </div>
+                <p className="border-l-2 border-[#38BDF8]/25 pl-3 text-sm leading-relaxed text-white/70">
+                  {post.body}
+                </p>
+                {showTranscript && post.transcriptText && (
+                  <pre className="mt-4 max-h-64 overflow-y-auto whitespace-pre-wrap rounded-lg border border-white/10 bg-black/40 p-3 font-mono text-[11px] leading-relaxed text-white/35">
+                    {post.transcriptText}
+                  </pre>
+                )}
+                {showTranscript && !post.transcriptText && (
+                  <p className="mt-3 text-xs italic text-white/30">
+                    Transcript will appear here after processing completes.
+                  </p>
+                )}
               </div>
             )}
           </article>
@@ -154,8 +199,8 @@ export default function DiscussionPostPage() {
             ) : (
               <ul className="mt-4 space-y-3">
                 {post.comments.map((comment) => (
-                  <li key={comment.id} className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
-                    <p className="text-xs text-white/50">{comment.authorLabel}</p>
+                  <li key={comment.id} className="rounded-xl border border-white/10 bg-white/[0.04] p-3 backdrop-blur-sm">
+                    <p className="text-[11px] font-medium text-[#38BDF8]/75">{comment.authorLabel}</p>
                     <p className="mt-1 text-sm leading-relaxed text-white/80">{comment.body}</p>
                     <p className="mt-2 text-xs text-white/40">
                       {new Date(comment.createdAt).toLocaleString()}
@@ -165,24 +210,25 @@ export default function DiscussionPostPage() {
               </ul>
             )}
 
-            <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.04] p-3">
+            <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.04] p-4">
               <textarea
                 value={commentDraft}
                 onChange={(e) => setCommentDraft(e.target.value)}
                 rows={3}
                 maxLength={4000}
-                placeholder="Add a comment"
-                className="w-full resize-none rounded-lg border border-white/10 bg-black/30 p-2.5 text-sm text-white placeholder:text-white/40 focus:border-[#38BDF8]/40 focus:outline-none"
+                placeholder="Add a thoughtful reply…"
+                className="w-full resize-none rounded-lg border border-white/10 bg-black/30 p-3 text-sm text-white placeholder:text-white/25 focus:border-[#38BDF8]/35 focus:outline-none focus:ring-1 focus:ring-[#38BDF8]/15"
               />
               {commentError && <p className="mt-2 text-xs text-red-400">{commentError}</p>}
-              <div className="mt-3 flex justify-end">
+              <div className="mt-3 flex items-center justify-between">
+                <p className="text-[11px] text-white/25">Anonymous · be respectful</p>
                 <button
                   type="button"
                   onClick={() => void handleCommentSubmit()}
                   disabled={isCommenting || !commentDraft.trim()}
-                  className="rounded-md bg-white px-3 py-2 text-sm font-medium text-black hover:opacity-90 disabled:opacity-40"
+                  className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-black transition-opacity hover:opacity-90 disabled:opacity-30"
                 >
-                  {isCommenting ? 'Posting...' : 'Post comment'}
+                  {isCommenting ? 'Posting…' : 'Post anonymously'}
                 </button>
               </div>
             </div>

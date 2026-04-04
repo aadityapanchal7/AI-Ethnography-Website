@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { Coordinates, DiscussionPost, DiscussionPostSort } from '@/lib/types';
 import { countries, specialties } from '@/lib/mockData';
 import { getDiscussionPostById, postAnonymousComment, upvoteDiscussionPost } from '@/lib/api';
+import DiscussionSubmissionMeta from '@/components/DiscussionSubmissionMeta';
  
 export interface ViewOnMapPayload {
   coordinates: Coordinates;
@@ -277,7 +278,7 @@ export default function DiscussionForum({
       {/* ═══════════════════════════════════════
           DETAIL PANEL
       ═══════════════════════════════════════ */}
-      <div className="flex min-h-[480px] min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-[480px] min-w-0 flex-1 flex-col overflow-hidden lg:border-l lg:border-white/10 lg:bg-black/35">
         {!display ? (
           <div className="flex flex-1 items-center justify-center p-8">
             <p className="text-sm text-white/25">Select a thread to read the full summary and discussion.</p>
@@ -354,55 +355,16 @@ export default function DiscussionForum({
             <div className="flex-1 overflow-y-auto">
               <div className="px-6 py-5 space-y-5">
  
-                {/* Meta grid */}
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/25 mb-3">
-                      Submission
-                    </p>
-                    <dl className="space-y-2">
-                      {([
-                        { label: 'Region', value: getCountryName(display.metadata.country) },
-                        { label: 'Stage', value: display.metadata.careerStage },
-                        { label: 'Group', value: display.metadata.isGroupSubmission ? 'Yes' : 'No' },
-                        display.metadata.specialty?.trim()
-                          ? { label: 'Focus', value: getSpecialtyLabel(display.metadata.specialty) }
-                          : null,
-                        display.metadata.practiceSetting
-                          ? { label: 'Setting', value: display.metadata.practiceSetting }
-                          : null,
-                      ] as ({ label: string; value: string } | null)[])
-                        .filter((r): r is { label: string; value: string } => r !== null)
-                        .map((row) => (
-                          <div key={row.label} className="flex items-baseline justify-between gap-4">
-                            <dt className="text-xs text-white/28 shrink-0">{row.label}</dt>
-                            <dd className="text-xs text-white/60 text-right">{row.value}</dd>
-                          </div>
-                        ))}
-                    </dl>
-                  </div>
- 
-                  <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/25 mb-3">
-                      Recording
-                    </p>
-                    {display.metadata.contributorIdentities?.trim() && (
-                      <p className="text-xs text-white/50 leading-relaxed mb-3">
-                        {display.metadata.contributorIdentities}
-                      </p>
-                    )}
-                    <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-medium ${statusBadge(display.transcriptionStatus)}`}>
-                      {statusLabel(display.transcriptionStatus)}
-                    </span>
-                    <p className="mt-3 text-xs text-white/25 leading-relaxed">
-                      {display.audioUrl ?? 'No audio linked in this row.'}
-                    </p>
-                  </div>
-                </div>
+                <DiscussionSubmissionMeta
+                  metadata={display.metadata}
+                  transcriptionStatus={display.transcriptionStatus}
+                  audioUrl={display.audioUrl}
+                  variant="forum"
+                />
  
                 {/* Story excerpt */}
                 {display.body?.trim() && (
-                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
                     <div className="flex items-center justify-between gap-2 mb-3">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#38BDF8]/75">
                         Story excerpt
@@ -448,7 +410,7 @@ export default function DiscussionForum({
                   {display.comments.length > 0 && (
                     <ul className="space-y-2 mb-4">
                       {display.comments.map((comment) => (
-                        <li key={comment.id} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                        <li key={comment.id} className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
                           <p className="text-[11px] font-medium text-[#38BDF8]/75 mb-1">{comment.authorLabel}</p>
                           <p className="text-sm text-white/55 leading-relaxed">{comment.body}</p>
                           <p className="mt-2 text-[10px] text-white/22">
@@ -460,7 +422,7 @@ export default function DiscussionForum({
                   )}
  
                   {/* Compose */}
-                  <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                  <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
                     <textarea
                       value={commentDraft}
                       onChange={(e) => setCommentDraft(e.target.value)}
