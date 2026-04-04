@@ -12,7 +12,7 @@ A global ethnographic study platform capturing how healthcare professionals expe
 
 ## Getting Started
 
-### Prerequisites
+### Prerequisitess
 
 - Node.js 18+
 - npm or yarn
