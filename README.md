@@ -12,7 +12,7 @@ A global ethnographic study platform capturing how healthcare professionals expe
 
 ## Getting Started
 
-### Prerequisitess
+### Prerequisites
 
 - Node.js 18+
 - npm or yarn
@@ -25,22 +25,30 @@ A global ethnographic study platform capturing how healthcare professionals expe
    cd AI-Ethnography-Website
    ```
 
-2. Install dependencies:
+2. Install and run the app from `frontend/`:
    ```bash
+   cd frontend
    npm install
-   ```
-
-3. Run the development server:
-   ```bash
    npm run dev
    ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Vercel / deploy
+
+Set the project **Root Directory** to `frontend` so builds run from the Next.js app folder.
 
 ## Project Structure
 
 ```
-src/
+frontend/                 # Next.js app (run npm install here)
+├── public/
+├── src/
+backend/                  # AWS CDK + Lambdas (separate from the web app)
+```
+
+```
+frontend/src/
 ├── app/                  # Next.js App Router pages
 │   ├── page.tsx          # Landing page
 │   ├── share/            # Share experience flow
@@ -63,7 +71,11 @@ src/
     └── mockData.ts       # Mock data for development
 ```
 
+Place `.env.local` in `frontend/` (see `frontend/.env.example`).
+
 ## Scripts
+
+Run these **inside `frontend/`** (after `cd frontend`):
 
 | Command         | Description                |
 |-----------------|----------------------------|
@@ -71,6 +83,11 @@ src/
 | `npm run build` | Build for production       |
 | `npm run start` | Start production server    |
 | `npm run lint`  | Run ESLint                 |
+
+### Cursor
+
+Project-specific AI rules live in `frontend/.cursorrules`. Open the **`frontend`** folder as your workspace (or add it in a multi-root workspace) if you want Cursor to pick them up reliably.
+
 
 ## License
 

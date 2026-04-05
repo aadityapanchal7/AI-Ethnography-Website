@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getDiscussionPostById, postAnonymousComment, upvoteDiscussionPost } from '@/lib/api';
 import type { DiscussionPost } from '@/lib/types';
@@ -11,7 +11,6 @@ import { countries } from '@/lib/mockData';
 
 export default function DiscussionPostPage() {
   const params = useParams<{ postId: string }>();
-  const router = useRouter();
   const postId = decodeURIComponent(params.postId);
 
   const [post, setPost] = useState<DiscussionPost | null>(null);
@@ -109,12 +108,8 @@ export default function DiscussionPostPage() {
       <div className="relative z-10 min-h-screen pt-24 pb-10">
         <div className="mx-auto w-full max-w-4xl px-4 sm:px-6">
           <div className="mb-4 flex items-center gap-3 text-sm">
-            <button type="button" onClick={() => router.back()} className="text-white/70 hover:text-white">
-              Back
-            </button>
-            <span className="text-white/30">/</span>
             <Link href="/discussion" className="text-white/70 hover:text-white">
-              All posts
+              Back to discussions
             </Link>
           </div>
 
