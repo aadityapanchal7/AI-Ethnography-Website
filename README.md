@@ -1,3 +1,8 @@
+#IMPORTANT
+
+Create .env in frontend folder, and paste this in (otherwise app will not run)
+NEXT_PUBLIC_API_BASE_URL=https://a9e5jfse8i.execute-api.us-east-1.amazonaws.com
+
 # AI Ethnography Website
 
 A global ethnographic study platform capturing how healthcare professionals experience artificial intelligence in their daily practice. The **Next.js** UI lives under `frontend/`; **AWS** (CDK + Lambda) for uploads, transcription, moderation, and discussion API lives under `backend/`.
