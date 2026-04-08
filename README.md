@@ -1,6 +1,6 @@
 # IMPORTANT
 
-## Create .env in frontend folder, and paste this in (otherwise app will not run)
+## Create .env in frontend folder and paste this in (otherwise app will not run)
 ### NEXT_PUBLIC_API_BASE_URL=https://a9e5jfse8i.execute-api.us-east-1.amazonaws.com
 
 # AI Ethnography Website
